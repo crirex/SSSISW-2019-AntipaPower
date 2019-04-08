@@ -58,6 +58,8 @@ project(AMMO)
 # In this example, we only request the Irrlicht module (required)
 #--------------------------------------------------------------
 
+SET(Chrono_DIR "${AMMO_SOURCE_DIR}/../chrono_build/cmake")
+
 LIST(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/../Chrono/lib")
 find_package(Chrono
              COMPONENTS Irrlicht
@@ -118,7 +120,20 @@ endif()
 # files in your project. 
 #--------------------------------------------------------------
 
-add_executable(AMMO my_simulator.cpp)
+set(INCROOT ${PROJECT_SOURCE_DIR}/include)
+set(SRCROOT ${PROJECT_SOURCE_DIR}/source)
+
+file(GLOB_RECURSE INCS 
+	"${INCROOT}/*.h"
+)
+file(GLOB_RECURSE SRCS 
+	"${SRCROOT}/*.cpp"
+)
+
+add_executable(AMMO 
+${INCS} 
+${SRCS}
+)
 
 #--------------------------------------------------------------
 # Set properties for your executable target
@@ -150,6 +165,45 @@ target_link_libraries(AMMO ${CHRONO_LIBRARIES})
 # Note that you must first set EXECUTABLE_OUTPUT_PATH
 # (this can simply be ${CMAKE_BINARY_DIR}, like in this example)
 #--------------------------------------------------------------
+#set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+#add_DLL_copy_command("${CHRONO_DLLS}")
 
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-add_DLL_copy_command("${CHRONO_DLLS}")
+set (DEBUG_PATH ${AMMO_SOURCE_DIR}/build/Debug)
+set (CHRONO_DEBUG_PATH ${AMMO_SOURCE_DIR}/../chrono_build/bin/Debug)
+
+set (RELEASE_PATH ${AMMO_SOURCE_DIR}/build/Release)
+set (CHRONO_RELEASE_PATH ${AMMO_SOURCE_DIR}/../chrono_build/bin/Release)
+
+file(COPY
+   ${CHRONO_RELEASE_PATH}/ChronoEngine.dll
+   DESTINATION ${RELEASE_PATH})
+	
+file(COPY
+    ${CHRONO_RELEASE_PATH}/ChronoEngine_irrlicht.dll
+    DESTINATION ${RELEASE_PATH})
+	
+file(COPY
+    ${CHRONO_RELEASE_PATH}/ChronoEngine_postprocess.dll
+    DESTINATION ${RELEASE_PATH})
+	
+file(COPY
+    ${CHRONO_RELEASE_PATH}/Irrlicht.dll
+    DESTINATION ${RELEASE_PATH})
+	
+	
+	
+file(COPY
+   ${CHRONO_DEBUG_PATH}/ChronoEngine.dll
+   DESTINATION ${DEBUG_PATH})
+	
+file(COPY
+    ${CHRONO_DEBUG_PATH}/ChronoEngine_irrlicht.dll
+    DESTINATION ${DEBUG_PATH})
+	
+file(COPY
+    ${CHRONO_DEBUG_PATH}/ChronoEngine_postprocess.dll
+    DESTINATION ${DEBUG_PATH})
+	
+file(COPY
+    ${CHRONO_DEBUG_PATH}/Irrlicht.dll
+    DESTINATION ${DEBUG_PATH})
