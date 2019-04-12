@@ -130,10 +130,32 @@ file(GLOB_RECURSE SRCS
 	"${SRCROOT}/*.cpp"
 )
 
+file(GLOB_RECURSE SRC_EnviormentS
+    "${SRCROOT}/Enviorment/*.cpp"
+)
+file(GLOB_RECURSE SRC_OptimizerS
+    "${SRCROOT}/Optimizer/*.cpp"
+)
+file(GLOB_RECURSE SRC_EnviormentI
+    "${INCROOT}/Enviorment/*.h"
+)
+file(GLOB_RECURSE SRC_OptimizerI
+    "${INCROOT}/Optimizer/*.h"
+)
+
 add_executable(AMMO 
 ${INCS} 
 ${SRCS}
+${SRC_EnviormentS}
+${SRC_OptimizerS}
+${SRC_EnviormentI}
+${SRC_OptimizerI}
 )
+
+source_group("Source files\\Enviorment" FILES ${SRC_EnviormentS})
+source_group("Source files\\Optimizer" FILES ${SRC_OptimizerS})
+source_group("Include files\\Enviorment" FILES ${SRC_EnviormentI})
+source_group("Include files\\Optimizer" FILES ${SRC_OptimizerI})
 
 #--------------------------------------------------------------
 # Set properties for your executable target
