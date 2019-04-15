@@ -1,141 +1,239 @@
-// =============================================================================
-// PROJECT CHRONO - http://projectchrono.org
-//
-// Copyright (c) 2014 projectchrono.org
-// All rights reserved.
-//
-// Use of this source code is governed by a BSD-style license that can be found
-// in the LICENSE file at the top level of the distribution and at
-// http://projectchrono.org/license-chrono.txt.
-//
-// =============================================================================
-// A very simple example that can be used as template project for
-// a Chrono::Engine simulator with 3D view.
-// =============================================================================
-
 #include "chrono/physics/ChSystemNSC.h"
+#include "chrono/solver/ChSolverMINRES.h"
+
 #include "chrono/physics/ChBodyEasy.h"
-#include "chrono/physics/ChLinkMate.h"
-#include "chrono/assets/ChTexture.h"
-#include "chrono/assets/ChColorAsset.h"
+#include "chrono/fea/ChElementSpring.h"
+#include "chrono/fea/ChElementBar.h"
+#include "chrono/fea/ChElementTetra_4.h"
+#include "chrono/fea/ChElementTetra_10.h"
+#include "chrono/fea/ChElementHexa_8.h"
+#include "chrono/fea/ChElementHexa_20.h"
+#include "chrono/fea/ChMesh.h"
+#include "chrono/fea/ChMeshFileLoader.h"
+#include "chrono/fea/ChLinkPointFrame.h"
+#include "chrono/fea/ChVisualizationFEAmesh.h"
+
 #include "chrono_irrlicht/ChIrrApp.h"
 
-// Use the namespace of Chrono
+//#include "chrono_matlab/ChMatlabEngine.h"
+//#include "chrono_matlab/ChSolverMatlab.h"
+
+// Remember to use the namespace 'chrono' because all classes
+// of Chrono::Engine belong to this namespace and its children...
 
 using namespace chrono;
+using namespace chrono::fea;
 using namespace chrono::irrlicht;
 
-// Use the main namespaces of Irrlicht
-
 using namespace irr;
-using namespace irr::core;
-using namespace irr::scene;
-using namespace irr::video;
-using namespace irr::io;
-using namespace irr::gui;
 
-int main(int argc, char* argv[]) {
-    // Set path to Chrono data directory
-    SetChronoDataPath(CHRONO_DATA_DIR);
-    
-    // Create a Chrono physical system
-    ChSystemNSC mphysicalSystem;
+int main(int argc, char* argv[]) 
+{
+	SetChronoDataPath(CHRONO_DATA_DIR);
+	GetLog() << "Copyright (c) 2017 projectchrono.org\nChrono version: " << CHRONO_VERSION << "\n\n";
 
-    // Create the Irrlicht visualization (open the Irrlicht device,
-    // bind a simple user interface, etc. etc.)
-    ChIrrApp application(&mphysicalSystem, L"A simple project template", core::dimension2d<u32>(800, 600),
-                         false);  // screen dimensions
+	// Create a Chrono::Engine physical system
+	ChSystemNSC my_system;
 
-    // Easy shortcuts to add camera, lights, logo and sky in Irrlicht scene:
-    application.AddTypicalLogo();
-    application.AddTypicalSky();
-    application.AddTypicalLights();
-    application.AddTypicalCamera(core::vector3df(2, 2, -5),
-                                 core::vector3df(0, 1, 0));  // to change the position of camera
-    // application.AddLightWithShadow(vector3df(1,25,-5), vector3df(0,0,0), 35, 0.2,35, 55, 512, video::SColorf(1,1,1));
+	// Create the Irrlicht visualization (open the Irrlicht device,
+	// bind a simple user interface, etc. etc.)
+	ChIrrApp application(&my_system, L"Irrlicht FEM visualization", core::dimension2d<u32>(800, 600), false, true);
 
-    //======================================================================
+	// Easy shortcuts to add camera, lights, logo and sky in Irrlicht scene:
+	application.AddTypicalLogo();
+	application.AddTypicalSky();
+	application.AddTypicalLights();
+	application.AddTypicalCamera(core::vector3df(0, (f32)0.6, -1));
 
-    // HERE YOU CAN POPULATE THE PHYSICAL SYSTEM WITH BODIES AND LINKS.
-    //
-    // An example: a pendulum.
+	// Create a mesh, that is a container for groups
+	// of elements and their referenced nodes.
+	auto my_mesh = std::make_shared<ChMesh>();
+	// Create a material, that must be assigned to each element,
+	// and set its parameters
+	auto mmaterial = std::make_shared<ChContinuumPlasticVonMises>();
+	mmaterial->Set_E(0.01e9);  // rubber 0.01e9, steel 200e9
+	mmaterial->Set_v(0.3);
+	mmaterial->Set_RayleighDampingK(0.001);
+	mmaterial->Set_density(1000);
 
-    // 1-Create a floor that is fixed (that is used also to represent the absolute reference)
+	//
+	// Add some TETAHEDRONS:
+	//
 
-    auto floorBody = std::make_shared<ChBodyEasyBox>(10, 2, 10,  // x, y, z dimensions
-                                                     3000,       // density
-                                                     false,      // no contact geometry
-                                                     true        // enable visualization geometry
-                                                     );
-    floorBody->SetPos(ChVector<>(0, -2, 0));
-    floorBody->SetBodyFixed(true);
+	// Load a .node file and a .ele  file from disk, defining a complicate tetrahedron mesh.
+	// This is much easier than creating all nodes and elements via C++ programming.
+	// You can generate these files using the TetGen tool.
+	try
+	{
+		ChMeshFileLoader::FromTetGenFile(my_mesh, GetChronoDataFile("fea/beam.node").c_str(),
+			GetChronoDataFile("fea/beam.ele").c_str(), mmaterial);
+	}
+	catch (ChException myerr)
+	{
+		GetLog() << myerr.what();
+		return 0;
+	}
 
-    mphysicalSystem.Add(floorBody);
+	// Apply a force to a node
+	auto mnodelast = std::dynamic_pointer_cast<ChNodeFEAxyz>(my_mesh->GetNode(my_mesh->GetNnodes() - 1));
+	mnodelast->SetForce(ChVector<>(500, 0,0));
 
-    // 2-Create a pendulum
+	//
+	// Add some HEXAHEDRONS (isoparametric bricks):
+	//
 
-    auto pendulumBody = std::make_shared<ChBodyEasyBox>(0.5, 2, 0.5,  // x, y, z dimensions
-                                                        3000,         // density
-                                                        false,        // no contact geometry
-                                                        true          // enable visualization geometry
-                                                        );
-    pendulumBody->SetPos(ChVector<>(0, 3, 0));
-    pendulumBody->SetPos_dt(ChVector<>(1, 1, 1));
+	//ChVector<> hexpos(0, 0, 0);
+	//double sx = 0.1;
+	//double sy = 0.1;
+	//double sz = 0.1;
+	//for (int e = 0; e < 6; ++e) {
+	//	double angle = e * (2 * CH_C_PI / 8.0);
+	//	hexpos.z() = 0.3 * cos(angle);
+	//	hexpos.x() = 0.3 * sin(angle);
+	//	ChMatrix33<> hexrot(Q_from_AngAxis(angle, VECT_Y));
+	//	std::shared_ptr<ChNodeFEAxyz> hnode1_lower;
+	//	std::shared_ptr<ChNodeFEAxyz> hnode2_lower;
+	//	std::shared_ptr<ChNodeFEAxyz> hnode3_lower;
+	//	std::shared_ptr<ChNodeFEAxyz> hnode4_lower;
+	//	for (int ilayer = 0; ilayer < 6; ++ilayer) {
+	//		double hy = ilayer * sz;
+	//		auto hnode1 = std::make_shared<ChNodeFEAxyz>(hexpos + hexrot * ChVector<>(0, hy, 0));
+	//		auto hnode2 = std::make_shared<ChNodeFEAxyz>(hexpos + hexrot * ChVector<>(0, hy, sz));
+	//		auto hnode3 = std::make_shared<ChNodeFEAxyz>(hexpos + hexrot * ChVector<>(sx, hy, sz));
+	//		auto hnode4 = std::make_shared<ChNodeFEAxyz>(hexpos + hexrot * ChVector<>(sx, hy, 0));
+	//		my_mesh->AddNode(hnode1);
+	//		my_mesh->AddNode(hnode2);
+	//		my_mesh->AddNode(hnode3);
+	//		my_mesh->AddNode(hnode4);
+	//		if (ilayer > 0) {
+	//			auto helement1 = std::make_shared<ChElementHexa_8>();
+	//			helement1->SetNodes(hnode1_lower, hnode2_lower, hnode3_lower, hnode4_lower, hnode1, hnode2, hnode3,
+	//				hnode4);
+	//			helement1->SetMaterial(mmaterial);
+	//			my_mesh->AddElement(helement1);
+	//		}
+	//		hnode1_lower = hnode1;
+	//		hnode2_lower = hnode2;
+	//		hnode3_lower = hnode3;
+	//		hnode4_lower = hnode4;
+	//	}
+	//	// For example, set an initial displacement to a node:
+	//	hnode4_lower->SetPos(hnode4_lower->GetX0() + hexrot * ChVector<>(0.1, 0.1, 0));
+	//	// Apply a force to a node
+	//	hnode4_lower->SetForce(hexrot * ChVector<>(500, 0, 0));
+	//}
 
-    mphysicalSystem.Add(pendulumBody);
+	//
+	// Final touches..
+	//
 
-    // 3-Create a spherical constraint.
-    //   Here we'll use a ChLinkMateGeneric, but we could also use ChLinkLockSpherical
+	// Remember to add the mesh to the system!
+	my_system.Add(my_mesh);
 
-    auto sphericalLink =
-        std::make_shared<ChLinkMateGeneric>(true, true, true, false, false, false);  // x,y,z,Rx,Ry,Rz constrains
-    ChFrame<> link_position_abs(ChVector<>(0, 4, 0));
+	auto wallBody = std::make_shared<ChBodyEasyBox>(0.15, 2, 2, 1000, true, true);
+	wallBody->SetPos(ChVector<>(0, 0, 0));
+	wallBody->SetBodyFixed(true);
+	my_system.Add(wallBody);
 
-    sphericalLink->Initialize(pendulumBody,        // the 1st body to connect
-                              floorBody,           // the 2nd body to connect
-                              false,               // the two following frames are in absolute, not relative, coords.
-                              link_position_abs,   // the link reference attached to 1st body
-                              link_position_abs);  // the link reference attached to 2nd body
+	// Create constraints between nodes and truss
+	// (for example, fix to ground all nodes which are near y=0
+	for (unsigned int inode = 0; inode < my_mesh->GetNnodes(); ++inode) 
+	{
+		if (auto mnode = std::dynamic_pointer_cast<ChNodeFEAxyz>(my_mesh->GetNode(inode))) 
+		{
+			if (mnode->GetPos().y() < 0.01) 
+			{
+				auto constraint = std::make_shared<ChLinkPointFrame>();
+				constraint->Initialize(mnode, wallBody);
+				my_system.Add(constraint);
 
-    mphysicalSystem.Add(sphericalLink);
+				// For example, attach small cube to show the constraint
+				auto mboxfloor = std::make_shared<ChBoxShape>();
+				mboxfloor->GetBoxGeometry().Size = ChVector<>(0.005);
+				constraint->AddAsset(mboxfloor);
 
-    // Optionally, attach a RGB color asset to the floor, for better visualization
-    auto color = std::make_shared<ChColorAsset>();
-    color->SetColor(ChColor(0.2f, 0.25f, 0.25f));
-    floorBody->AddAsset(color);
+				// Otherwise there is an easier method: just set the node as fixed (but
+				// in this way you do not get infos about reaction forces as with a constraint):
+				//
+				// mnode->SetFixed(true);
+			}
+		}
+	}
 
-    // Optionally, attach a texture to the pendulum, for better visualization
-    auto texture = std::make_shared<ChTexture>();
-    texture->SetTextureFilename(GetChronoDataFile("cubetexture_bluwhite.png"));  // texture in ../data
-    pendulumBody->AddAsset(texture);
 
-    //======================================================================
+	// ==Asset== attach a visualization of the FEM mesh.
+	// This will automatically update a triangle mesh (a ChTriangleMeshShape
+	// asset that is internally managed) by setting  proper
+	// coordinates and vertex colors as in the FEM elements.
+	// Such triangle mesh can be rendered by Irrlicht or POVray or whatever
+	// postprocessor that can handle a colored ChTriangleMeshShape).
+	// Do not forget AddAsset() at the end!
 
-    // Use this function for adding a ChIrrNodeAsset to all items
-    // Otherwise use application.AssetBind(myitem); on a per-item basis.
-    application.AssetBindAll();
+	auto mvisualizemesh = std::make_shared<ChVisualizationFEAmesh>(*(my_mesh.get()));
+	mvisualizemesh->SetFEMdataType(ChVisualizationFEAmesh::E_PLOT_NODE_SPEED_NORM);
+	mvisualizemesh->SetColorscaleMinMax(0.0, 5.50);
+	mvisualizemesh->SetShrinkElements(true, 0.85);
+	mvisualizemesh->SetSmoothFaces(true);
+	my_mesh->AddAsset(mvisualizemesh);
 
-    // Use this function for 'converting' assets into Irrlicht meshes
-    application.AssetUpdateAll();
+	/*auto mvisualizemeshref = std::make_shared<ChVisualizationFEAmesh>(*(my_mesh.get()));
+	mvisualizemeshref->SetFEMdataType(ChVisualizationFEAmesh::E_PLOT_SURFACE);
+	mvisualizemeshref->SetWireframe(true);
+	mvisualizemeshref->SetDrawInUndeformedReference(true);
+	my_mesh->AddAsset(mvisualizemeshref);*/
 
-    // Adjust some settings:
-    application.SetTimestep(0.005);
-    application.SetTryRealtime(true);
+	/*auto mvisualizemeshC = std::make_shared<ChVisualizationFEAmesh>(*(my_mesh.get()));
+	mvisualizemeshC->SetFEMglyphType(ChVisualizationFEAmesh::E_GLYPH_NODE_DOT_POS);
+	mvisualizemeshC->SetFEMdataType(ChVisualizationFEAmesh::E_PLOT_NONE);
+	mvisualizemeshC->SetSymbolsThickness(0.006);
+	my_mesh->AddAsset(mvisualizemeshC);*/
 
-    //
-    // THE SOFT-REAL-TIME CYCLE
-    //
+	// ==IMPORTANT!== Use this function for adding a ChIrrNodeAsset to all items
+	// in the system. These ChIrrNodeAsset assets are 'proxies' to the Irrlicht meshes.
+	// If you need a finer control on which item really needs a visualization proxy in
+	// Irrlicht, just use application.AssetBind(myitem); on a per-item basis.
 
-    while (application.GetDevice()->run()) {
-        application.BeginScene();
+	application.AssetBindAll();
 
-        application.DrawAll();
+	// ==IMPORTANT!== Use this function for 'converting' into Irrlicht meshes the assets
+	// that you added to the bodies into 3D shapes, they can be visualized by Irrlicht!
 
-        // This performs the integration timestep!
-        application.DoStep();
+	application.AssetUpdateAll();
 
-        application.EndScene();
-    }
+	// Mark completion of system construction
+	my_system.SetupInitial();
 
-    return 0;
+	//
+	// THE SOFT-REAL-TIME CYCLE
+	//
+
+	my_system.SetTimestepperType(chrono::ChTimestepper::Type::EULER_IMPLICIT_LINEARIZED);
+
+	my_system.SetSolverType(ChSolver::Type::MINRES);
+	my_system.SetSolverWarmStarting(true);
+	my_system.SetMaxItersSolverSpeed(40);
+	my_system.SetTolForce(1e-10);
+	// auto msolver = std::static_pointer_cast<ChSolverMINRES>(my_system.GetSolver());
+	// msolver->SetVerbose(true);
+	// msolver->SetDiagonalPreconditioning(true);
+
+	/*
+	//// TEST
+	ChMatlabEngine matlab_engine;
+	auto matlab_solver = std::make_shared<ChSolverMatlab>(matlab_engine);
+	my_system.SetSolver(matlab_solver);
+	*/
+	application.SetTimestep(0.001);
+
+	while (application.GetDevice()->run()) {
+		application.BeginScene();
+
+		application.DrawAll();
+
+		application.DoStep();
+
+		application.EndScene();
+	}
+
+	return 0;
 }
