@@ -12,7 +12,9 @@
 #include "fea/ChLinkPointFrame.h"
 #include "fea/ChLinkDirFrame.h"
 #include "chrono_irrlicht/ChIrrApp.h"
+
 #include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Beam.h"
+#include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Wall.h"
 
 using namespace chrono;
 using namespace chrono::fea;
@@ -40,6 +42,11 @@ int main(int argc, char* argv[])
 
 	Beam barna(node1, node2);
 	my_system.Add(barna.CreateBeam());
+
+	auto wall = std::make_shared<Wall>(0.3, 0.01, 0.3, 1000, false, true);
+	wall->SetPosition(ChVector<>(0, 0, 0));
+	wall->SetRotation(CH_C_PI / 2, VECT_Z);
+	my_system.Add(wall->GetWall());
 
 	application.AssetBindAll();
 	application.AssetUpdateAll();
