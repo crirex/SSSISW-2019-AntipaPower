@@ -31,8 +31,11 @@ int main(int argc, char* argv[])
 	node2->SetMass(15);
 	node2->SetForce(chrono::VectorF(0.0f, -1.0f, 0.0f));
 
-	Beam barna(node1, node2);
-	my_system.Add(barna.CreateBeam());
+	auto beam = std::make_shared<Beam>(ChVector<>(0, 0.0, 0.0), ChVector<>(0.1, 0.0, 0.0), std::make_pair<double, double>(0.01, 0.01));
+	my_system.Add(beam->GetMesh());
+	beam->GetFirstNode()->SetFixed(true);
+	beam->GetSecondNode()->SetMass(15);
+	beam->GetSecondNode()->SetForce(chrono::VectorF(0.0f, -1.0f, 0.0f));
 
 	auto wall = std::make_shared<Wall>(0.3, 0.01, 0.3, 1000, false, true);
 	wall->SetPosition(ChVector<>(0, 0, 0));
@@ -47,7 +50,7 @@ int main(int argc, char* argv[])
 	my_system.SetSolverWarmStarting(true);
 	my_system.SetMaxItersSolverSpeed(460);
 	my_system.SetMaxItersSolverStab(460);
-	my_system.SetTolForce(1e-13);
+	my_system.SetTolForce(0.1e-13);
 
 	auto msolver = std::static_pointer_cast<ChSolverMINRES>(my_system.GetSolver());
 	msolver->SetVerbose(false);
