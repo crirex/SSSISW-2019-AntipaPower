@@ -2,7 +2,7 @@
 
 Wall::Wall(double xSize, double ySize, double zSize, double density, bool collide, bool visualAsset)
 {
-	this->m_wall = std::make_shared<ChBodyEasyBox>(xSize, ySize, zSize, density, collide, visualAsset);
+	this->m_wall = std::make_shared<chrono::ChBodyEasyBox>(xSize, ySize, zSize, density, collide, visualAsset);
 	this->m_wall->SetBodyFixed(true);
 }
 
