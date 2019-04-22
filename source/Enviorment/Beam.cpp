@@ -1,73 +1,129 @@
 #include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Beam.h"
 
-Beam::Beam()
+Beam::Beam(chrono::ChSystemNSC & system) : m_refSystem(system)
 {
 	this->m_mesh = std::make_shared<chrono::fea::ChMesh>();
-	this->m_beamElement = std::make_shared<chrono::fea::ChElementBeamEuler>();
-	this->m_visualizationMesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(this->m_mesh.get()));
-	this->m_mesh->AddElement(this->m_beamElement);
-	InitVisualizationMesh();
+	this->m_refSystem.Add(this->m_mesh);
 }
 
-Beam::Beam(const chrono::ChVector<> & firstNode,
-	const chrono::ChVector<> & secondNode,
-	const std::pair<double, double> & sectionWidthYZ) : Beam()
+Beam::Beam(chrono::ChSystemNSC & system, const chrono::ChVector<> & size, const chrono::ChVector<> & density) :
+	Beam(system)
 {
-	auto first = std::make_shared<chrono::fea::ChNodeFEAxyzrot>(chrono::ChFrame<>(firstNode));
-	auto second = std::make_shared<chrono::fea::ChNodeFEAxyzrot>(chrono::ChFrame<>(secondNode));
-	this->m_mesh->AddNode(first);
-	this->m_mesh->AddNode(second);
-	this->m_beamElement->SetNodes(first, second);
-	SetSection(sectionWidthYZ.first, sectionWidthYZ.second);
+	this->m_size = size;
+	this->m_density = density;
 }
 
-Beam::Beam(const std::shared_ptr<chrono::fea::ChNodeFEAxyzrot> & firstNode,
-	const std::shared_ptr<chrono::fea::ChNodeFEAxyzrot> & secondNode,
-	const std::shared_ptr<chrono::fea::ChBeamSectionAdvanced> & section) : Beam()
-{
-	this->m_mesh->AddNode(firstNode);
-	this->m_mesh->AddNode(secondNode);
-	this->m_beamElement->SetNodes(firstNode, secondNode);
-	this->m_beamElement->SetSection(section);
-}
-
-std::shared_ptr<chrono::fea::ChMesh> Beam::GetMesh() const
+const std::shared_ptr<chrono::fea::ChMesh> & Beam::GetMesh() const
 {
 	return this->m_mesh;
 }
 
-const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & Beam::GetVisualizationMesh() const
+void Beam::SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material)
 {
-	return this->m_visualizationMesh;
+	this->m_material = material;
 }
 
-const std::shared_ptr<chrono::fea::ChElementBeamEuler> & Beam::GetBeamElement() const
+void Beam::SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization)
 {
-	return this->m_beamElement;
+	this->m_mesh->AddAsset(visualization);
 }
 
-std::shared_ptr<chrono::fea::ChNodeFEAxyzrot> Beam::GetFirstNode() const
+void Beam::Build(const chrono::Vector & orientation, const chrono::Vector & origin)
 {
-	return this->m_beamElement->GetNodeA();
+	auto blockSize = this->m_size / this->m_density;
+	for (uint16_t index = 0; index < this->m_density.z(); ++index)
+	{
+		BuildBlock(origin, blockSize, orientation);
+	}
 }
 
-std::shared_ptr<chrono::fea::ChNodeFEAxyzrot> Beam::GetSecondNode() const
+void Beam::BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation)
 {
-	return this->m_beamElement->GetNodeB();
+	auto nodes = ConstructBlockNodes(origin, orientation, size);
+
+	auto BuildTetra = [this](const auto & firstNode, const auto & secondNode, const auto & thirdNode, const auto & fourthNode)
+	{
+		auto tetra = std::make_shared<chrono::fea::ChElementTetra_4>();
+		tetra->SetNodes(firstNode, secondNode, thirdNode, fourthNode);
+		tetra->SetMaterial(this->m_material);
+		this->m_mesh->AddElement(tetra);
+	};
+
+	BuildTetra(nodes[0], nodes[1], nodes[6], nodes[7]);
+	BuildTetra(nodes[0], nodes[1], nodes[2], nodes[6]);
+	BuildTetra(nodes[0], nodes[1], nodes[3], nodes[7]);
+	BuildTetra(nodes[6], nodes[7], nodes[0], nodes[4]);
+	BuildTetra(nodes[6], nodes[7], nodes[1], nodes[5]);
 }
 
-void Beam::SetSection(double widthY, double widthZ)
+std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> Beam::BuildBase(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size)
 {
-	auto section = std::make_shared<chrono::fea::ChBeamSectionAdvanced>(chrono::fea::ChBeamSectionAdvanced());
-	section->SetAsRectangularSection(widthY, widthZ);
-	this->m_beamElement->SetSection(section);
+	auto base = chrono::Vector(1) - orientation;
+	auto nodes = std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>({
+		std::make_shared<chrono::fea::ChNodeFEAxyz>(origin),
+		std::make_shared<chrono::fea::ChNodeFEAxyz>(origin + size * base),
+		});
+	if (base.x())
+	{
+		nodes.push_back(std::make_shared<chrono::fea::ChNodeFEAxyz>(origin + size * chrono::VECT_X));
+	}
+	if (base.y())
+	{
+		nodes.push_back(std::make_shared<chrono::fea::ChNodeFEAxyz>(origin + size * chrono::VECT_Y));
+	}
+	if (base.z())
+	{
+		nodes.push_back(std::make_shared<chrono::fea::ChNodeFEAxyz>(origin + size * chrono::VECT_Z));
+	}
+	assert(nodes.size() == baseSize);
+	return nodes;
 }
 
-void Beam::InitVisualizationMesh()
+std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> Beam::ConstructBlockNodes(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size)
 {
-	this->m_visualizationMesh->SetFEMdataType(chrono::fea::ChVisualizationFEAmesh::E_PLOT_ELEM_BEAM_MZ);
-	this->m_visualizationMesh->SetColorscaleMinMax(-0.5, 0.5);
-	this->m_visualizationMesh->SetSmoothFaces(true);
-	this->m_visualizationMesh->SetWireframe(false);
-	this->m_mesh->AddAsset(this->m_visualizationMesh);
+	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> nodes;
+	if (!this->m_mesh->GetNodes().size())
+	{
+		auto baseNodes = BuildBase(origin, orientation, size);
+		if (true)
+		{
+			SetFixedBase(baseNodes);
+		}
+		std::for_each(baseNodes.begin(), baseNodes.end(), [&](auto & node) {
+			nodes.push_back(node);
+			this->m_mesh->AddNode(node);
+		});
+	}
+	else
+	{
+		std::vector<std::shared_ptr<chrono::fea::ChNodeFEAbase>> lastNodes(this->m_mesh->GetNodes().end() - baseSize, this->m_mesh->GetNodes().end());
+		std::for_each(lastNodes.begin(), lastNodes.end(), [&](const auto & node) {
+			nodes.push_back(std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(node));
+		});
+	}
+	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAbase>> lastNodes(this->m_mesh->GetNodes().end() - baseSize, this->m_mesh->GetNodes().end());
+	std::for_each(lastNodes.begin(), lastNodes.end(), [&](const auto & node) {
+		auto newNode = std::make_shared<chrono::fea::ChNodeFEAxyz>(std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(node)->GetPos() + orientation * size);
+		nodes.push_back(newNode);
+		this->m_mesh->AddNode(newNode);
+	});
+
+	return nodes;
+}
+
+void Beam::SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes)
+{
+	this->m_base = std::make_shared<chrono::ChBody>();
+	this->m_base->SetBodyFixed(true);
+	this->m_refSystem.Add(this->m_base);
+	for (const auto & node : baseNodes)
+	{
+		auto constraint = std::make_shared<chrono::fea::ChLinkPointFrame>();
+		constraint->Initialize(node, this->m_base);
+		this->m_refSystem.Add(constraint);
+
+		auto mboxfloor = std::make_shared<chrono::ChBoxShape>();
+		mboxfloor->GetBoxGeometry().Size = chrono::ChVector<>(0.005);
+		constraint->AddAsset(mboxfloor);
+	}
 }

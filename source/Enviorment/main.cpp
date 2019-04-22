@@ -3,6 +3,7 @@
 #include "chrono/solver/ChSolverPMINRES.h"
 #include "chrono/solver/ChSolverMINRES.h"
 #include "chrono_irrlicht/ChIrrApp.h"
+#include "chrono/fea/ChLinkPointFrame.h"
 
 #include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Beam.h"
 #include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Wall.h"
@@ -21,26 +22,33 @@ int main(int argc, char* argv[])
 	ChIrrApp application(&my_system, L"Environment", core::dimension2d<u32>(800, 600), false);
 	application.AddTypicalLogo();
 	application.AddTypicalSky();
-	application.AddTypicalCamera(core::vector3df(0.3, 0.3, 0.3));
-	application.AddLightWithShadow(core::vector3df(1, 25, -5), core::vector3df(0, 0, 0), 35, 0.2, 35, 100, 512, video::SColorf(1, 1, 1));
+	application.AddTypicalLights();
+	application.AddTypicalCamera(core::vector3df(3, 3, 3));
 
-	auto node1 = std::make_shared<ChNodeFEAxyzrot>(ChFrame<>(ChVector<>(0, 0, 0)));
-	auto node2 = std::make_shared<ChNodeFEAxyzrot>(ChFrame<>(ChVector<>(0.1, 0, 0)));
 
-	node1->SetFixed(true);
-	node2->SetMass(15);
-	node2->SetForce(chrono::VectorF(0.0f, -1.0f, 0.0f));
+	auto beam = Beam(my_system, chrono::Vector(0.5, 0.5, 10), chrono::Vector(1, 1, 30));
 
-	auto beam = std::make_shared<Beam>(ChVector<>(0, 0.0, 0.0), ChVector<>(0.1, 0.0, 0.0), std::make_pair<double, double>(0.01, 0.01));
-	my_system.Add(beam->GetMesh());
-	beam->GetFirstNode()->SetFixed(true);
-	beam->GetSecondNode()->SetMass(15);
-	beam->GetSecondNode()->SetForce(chrono::VectorF(0.0f, -1.0f, 0.0f));
 
-	auto wall = std::make_shared<Wall>(0.3, 0.01, 0.3, 1000, false, true);
+	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam.GetMesh().get()));
+	mesh->SetFEMdataType(chrono::fea::ChVisualizationFEAmesh::E_PLOT_ELEM_STRAIN_VONMISES);
+	mesh->SetColorscaleMinMax(-0.5, 0.5);
+	mesh->SetSmoothFaces(true);
+	mesh->SetWireframe(false);
+	beam.SetVisualizationMesh(mesh);
+
+	auto material = std::make_shared<chrono::fea::ChContinuumPlasticVonMises>();
+	material->Set_E(0.005e9);  // rubber 0.01e9, steel 200e9 
+	material->Set_v(0.3);
+	beam.SetMaterial(material);
+
+	beam.Build(chrono::Vector(1,0,0));
+	auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
+
+	auto wall = std::make_shared<Wall>(5, 0.1, 5, 1000, false, true);
 	wall->SetPosition(ChVector<>(0, 0, 0));
 	wall->SetRotation(CH_C_PI / 2, VECT_Z);
 	my_system.Add(wall->GetWall());
+
 
 	application.AssetBindAll();
 	application.AssetUpdateAll();
