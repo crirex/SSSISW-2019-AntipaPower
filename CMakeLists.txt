@@ -213,7 +213,6 @@ file(COPY
     DESTINATION ${RELEASE_PATH})
 	
 	
-	
 file(COPY
    ${CHRONO_DEBUG_PATH}/ChronoEngine.dll
    DESTINATION ${DEBUG_PATH})
@@ -229,3 +228,11 @@ file(COPY
 file(COPY
     ${CHRONO_DEBUG_PATH}/Irrlicht.dll
     DESTINATION ${DEBUG_PATH})
+
+
+set (INCLUDE_ENVIORMENT ${AMMO_SOURCE_DIR}/include/Enviorment)
+set (INCLUDE_OPTIMIZER ${AMMO_SOURCE_DIR}/include/Optimizer)
+set (SOURCE_ENVIORMENT ${AMMO_SOURCE_DIR}/source/Enviorment)
+set (SOURCE_OPTIMIZER ${AMMO_SOURCE_DIR}/source/Optimizer)
+
+include_directories(AMMO ${INCLUDE_ENVIORMENT} ${INCLUDE_OPTIMIZER} ${SOURCE_ENVIORMENT} ${SOURCE_OPTIMIZER})
