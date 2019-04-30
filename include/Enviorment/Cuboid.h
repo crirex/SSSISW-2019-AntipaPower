@@ -11,17 +11,20 @@
 #include "chrono/fea/ChElementTetra_4.h"
 #include "chrono/fea/ChLinkPointFrame.h"
 
-class Beam
+#include "MeshBlock.h"
+
+class Cuboid
 {
 
 public:
-	Beam(chrono::ChSystemNSC & system);
-	Beam(chrono::ChSystemNSC & system,
-		const chrono::ChVector<> & size,
-		const chrono::ChVector<> & density = chrono::Vector(1, 1, 1));
-	~Beam() = default;
+	Cuboid(chrono::ChSystemNSC & system);
+	Cuboid(chrono::ChSystemNSC & system,
+		const chrono::ChVector<> & blockSize,
+		const chrono::ChVector<> & size = chrono::Vector(1, 1, 1));
+	~Cuboid() = default;
 
 public:
+	///Getters
 	const std::shared_ptr<chrono::fea::ChMesh> & GetMesh() const;
 
 	///Setters
@@ -32,11 +35,7 @@ public:
 	void Build(const chrono::Vector & orientation = chrono::VECT_Y, const chrono::Vector & origin = chrono::Vector(0, 0, 0));
 
 private:
-	void BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation);
 	void SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes);
-	
-	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> BuildBase(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size);
-	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> ConstructBlockNodes(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size);
 
 private:
 	chrono::ChSystemNSC & m_refSystem;
@@ -47,9 +46,6 @@ private:
 
 	chrono::Vector m_size;
 	chrono::Vector m_density;
-
-private:
-	const uint8_t baseSize = 4;
 };
 
 

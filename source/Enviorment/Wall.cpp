@@ -1,4 +1,4 @@
-#include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Wall.h"
+#include "Wall.h"
 
 Wall::Wall(double xSize, double ySize, double zSize, double density, bool collide, bool visualAsset)
 {

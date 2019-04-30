@@ -5,8 +5,8 @@
 #include "chrono_irrlicht/ChIrrApp.h"
 #include "chrono/fea/ChLinkPointFrame.h"
 
-#include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Beam.h"
-#include "../../AMMO/SSSISW-2019-AntipaPower/include/Enviorment/Wall.h"
+#include "Cuboid.h"
+#include "Wall.h"
 
 using namespace chrono;
 using namespace chrono::fea;
@@ -15,6 +15,7 @@ using namespace irr;
 
 int main(int argc, char* argv[])
 {
+
 	SetChronoDataPath(CHRONO_DATA_DIR);
 
 	ChSystemNSC my_system;
@@ -25,11 +26,11 @@ int main(int argc, char* argv[])
 	application.AddTypicalLights();
 	application.AddTypicalCamera(core::vector3df(3, 3, 3));
 
-
-	auto beam = Beam(my_system, chrono::Vector(0.5, 0.5, 10), chrono::Vector(1, 1, 30));
+	auto beam = Cuboid(my_system, chrono::Vector(0.5, 0.5, 0.5), chrono::Vector(1, 1, 20));
 
 
 	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam.GetMesh().get()));
+
 	mesh->SetFEMdataType(chrono::fea::ChVisualizationFEAmesh::E_PLOT_ELEM_STRAIN_VONMISES);
 	mesh->SetColorscaleMinMax(-0.5, 0.5);
 	mesh->SetSmoothFaces(true);
@@ -42,12 +43,15 @@ int main(int argc, char* argv[])
 	beam.SetMaterial(material);
 
 	beam.Build(chrono::Vector(1,0,0));
-	auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
 
-	auto wall = std::make_shared<Wall>(5, 0.1, 5, 1000, false, true);
+	//auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
+	//ChNodeFEAxyzrot(ChFrame<>(ChVector<>(0, 0, 0)))
+
+	
+	/*auto wall = std::make_shared<Wall>(0.3, 0.01, 0.3, 1000, false, true);
 	wall->SetPosition(ChVector<>(0, 0, 0));
 	wall->SetRotation(CH_C_PI / 2, VECT_Z);
-	my_system.Add(wall->GetWall());
+	my_system.Add(wall->GetWall());*/
 
 
 	application.AssetBindAll();
