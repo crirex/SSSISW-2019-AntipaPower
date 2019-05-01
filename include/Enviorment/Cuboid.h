@@ -46,6 +46,8 @@ private:
 
 	chrono::Vector m_size;
 	chrono::Vector m_density;
+
+	std::vector<std::shared_ptr<MeshBlock>> m_meshBlocks;
 };
 
 

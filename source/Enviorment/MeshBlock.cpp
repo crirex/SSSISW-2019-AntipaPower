@@ -133,13 +133,14 @@ std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> MeshBlock::ConstructExpa
 	auto lastNodes = GetCurrentFace(orientation).GetNodes();
 	nodes.insert(nodes.end(), lastNodes.begin(), lastNodes.end());
 
-	std::for_each(nodes.begin(), nodes.end(), [&](const auto & node) {
+	std::for_each(lastNodes.begin(), lastNodes.end(), [&](const auto & node) {
 		auto castana = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(node)->GetPos();
 		auto newNode = std::make_shared<chrono::fea::ChNodeFEAxyz>(castana + orientation * this->m_size);
 		nodes.push_back(newNode);
 		this->m_mesh->AddNode(newNode);
 	});
 
+	nodes = RemapNodes(orientation, nodes);
 	return nodes;
 }
 
@@ -161,4 +162,22 @@ const BlockFace & MeshBlock::GetCurrentFace(const chrono::Vector & orientation) 
 	{
 		throw std::invalid_argument("Invalid orientation vector");
 	}
+}
+
+std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> MeshBlock::RemapNodes(const chrono::Vector & orientation ,  const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>& nodes) const
+{
+	if(orientation.x() > 0 )
+		return std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>{nodes[0], nodes[5], nodes[4], nodes[1], nodes[2], nodes[7], nodes[6], nodes[3] };
+	if(orientation.x() < 0)
+		return std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>{nodes[5], nodes[0], nodes[1], nodes[4], nodes[7], nodes[2], nodes[3], nodes[6] };
+
+	if(orientation.y() < 0)
+		return std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>{nodes[4], nodes[5], nodes[6], nodes[7], nodes[0], nodes[1], nodes[2], nodes[3] };
+	if(orientation.y() > 0)
+		return std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>{nodes[0], nodes[1], nodes[2], nodes[3], nodes[4], nodes[5], nodes[6], nodes[7] };
+
+	if(orientation.z() > 0 )
+		return std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>{nodes[1], nodes[4], nodes[0], nodes[5], nodes[3], nodes[6], nodes[2], nodes[7] };
+	if(orientation.z() < 0)
+		return std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>{nodes[4], nodes[1], nodes[5], nodes[0], nodes[6], nodes[3], nodes[7], nodes[2] };
 }

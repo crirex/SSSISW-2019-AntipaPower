@@ -31,22 +31,36 @@ void Cuboid::SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualiza
 void Cuboid::Build(const chrono::Vector & orientation, const chrono::Vector & origin)
 {
 	auto blockSize = this->m_size / this->m_density;
-	MeshBlock meshBlock(this->m_mesh, this->m_material, chrono::Vector(0, 0, 0), chrono::Vector(1, 1, 1));
-	for (int index = 0; index < meshBlock.GetFaces().size(); ++index)
+	auto meshBlock = std::make_shared<MeshBlock>(this->m_mesh, this->m_material, chrono::Vector(0, 0, 0), chrono::Vector(1, 1, 1));
+
+	this->SetFixedBase({ meshBlock->GetBottom().GetNodes().begin(), meshBlock->GetBottom().GetNodes().end() });
+
+	this->m_meshBlocks.emplace_back(meshBlock);
+
+
+	for (uint16_t x = 0; x < this->m_density.x(); ++x)
+	{	
+		meshBlock = meshBlock->Expand(chrono::VECT_X);
+		this->m_meshBlocks.emplace_back(meshBlock);
+	}
+
+	/*for (const auto& block : this->m_meshBlocks)
 	{
-		std::cout << "Face number " << index << ": \n\t";
-		for (const auto & node : meshBlock.GetFaces()[index].GetNodes())
+		auto copyBlock = block;
+		for (auto index = 0; index < this->m_density.y(); ++index)
 		{
-			std::cout << "(" << node->GetPos().x() << ", " << node->GetPos().y() << ", " << node->GetPos().z() << ") ";
+			copyBlock = copyBlock->Expand(chrono::VECT_Y);
+			this->m_meshBlocks.emplace_back(copyBlock);
 		}
-		std::cout << "\n";
 	}
-	for (uint16_t index = 0; index < this->m_density.z(); ++index)
+
+	for (uint16_t z = 0; z < this->m_density.z(); ++z)
 	{
-		//eroare
-		//meshBlock.Expand(orientation);
+		
 	}
+*/
 }
+
 
 void Cuboid::SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes)
 {

@@ -48,6 +48,8 @@ private:
 
 	const BlockFace & GetCurrentFace(const chrono::Vector & orientation) const;
 
+	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> RemapNodes(const chrono::Vector& orientation, const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>& nodes) const;
+
 private:
 	std::shared_ptr<chrono::fea::ChMesh> m_mesh;
 	std::shared_ptr<chrono::fea::ChContinuumElastic> m_material;

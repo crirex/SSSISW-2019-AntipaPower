@@ -20,13 +20,13 @@ int main(int argc, char* argv[])
 
 	ChSystemNSC my_system;
 
-	ChIrrApp application(&my_system, L"Environment", core::dimension2d<u32>(800, 600), false);
+	ChIrrApp application(&my_system, L"Environment", core::dimension2d<u32>(1200, 720), false);
 	application.AddTypicalLogo();
 	application.AddTypicalSky();
 	application.AddTypicalLights();
 	application.AddTypicalCamera(core::vector3df(3, 3, 3));
 
-	auto beam = Cuboid(my_system, chrono::Vector(0.5, 0.5, 0.5), chrono::Vector(1, 1, 20));
+	auto beam = Cuboid(my_system, chrono::Vector(0.5, 0.5, 0.5), chrono::Vector(5, 5, 5));
 
 
 	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam.GetMesh().get()));
@@ -42,12 +42,12 @@ int main(int argc, char* argv[])
 	material->Set_v(0.3);
 	beam.SetMaterial(material);
 
-	beam.Build(chrono::Vector(1,0,0));
+	beam.Build(chrono::Vector(0, 0, 1));
 
-	//auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
-	//ChNodeFEAxyzrot(ChFrame<>(ChVector<>(0, 0, 0)))
+	auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
+	lastNode->SetForce(chrono::Vector(10000, 0, 0));
 
-	
+
 	/*auto wall = std::make_shared<Wall>(0.3, 0.01, 0.3, 1000, false, true);
 	wall->SetPosition(ChVector<>(0, 0, 0));
 	wall->SetRotation(CH_C_PI / 2, VECT_Z);
