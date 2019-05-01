@@ -72,7 +72,8 @@ void Cuboid::ConstructShape(const chrono::Vector & orientation)
 			break;
 		}
 	}
-	for (const auto & block : this->m_meshBlocks)
+	auto copyMeshBlock = std::vector<std::shared_ptr<MeshBlock>>(this->m_meshBlocks);
+	for (const auto & block : copyMeshBlock)
 	{
 		auto copyBlock = block;
 		for (uint16_t index = 0; index < size; ++index)
