@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 	material->Set_v(0.3);
 	beam.SetMaterial(material);
 
-	beam.Build(chrono::Vector(0, 0, 1));
+	beam.Build(chrono::Vector(1, 0, 0));
 
 	auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
 	lastNode->SetForce(chrono::Vector(10000, 0, 0));

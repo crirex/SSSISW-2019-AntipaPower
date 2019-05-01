@@ -36,6 +36,7 @@ public:
 
 private:
 	void SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes);
+	void ConstructShape(const chrono::Vector & orientation);
 
 private:
 	chrono::ChSystemNSC & m_refSystem;

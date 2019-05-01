@@ -37,28 +37,9 @@ void Cuboid::Build(const chrono::Vector & orientation, const chrono::Vector & or
 
 	this->m_meshBlocks.emplace_back(meshBlock);
 
-
-	for (uint16_t x = 0; x < this->m_density.x(); ++x)
-	{	
-		meshBlock = meshBlock->Expand(chrono::VECT_X);
-		this->m_meshBlocks.emplace_back(meshBlock);
-	}
-
-	/*for (const auto& block : this->m_meshBlocks)
-	{
-		auto copyBlock = block;
-		for (auto index = 0; index < this->m_density.y(); ++index)
-		{
-			copyBlock = copyBlock->Expand(chrono::VECT_Y);
-			this->m_meshBlocks.emplace_back(copyBlock);
-		}
-	}
-
-	for (uint16_t z = 0; z < this->m_density.z(); ++z)
-	{
-		
-	}
-*/
+	ConstructShape(chrono::VECT_X);
+	ConstructShape(chrono::VECT_Y);
+	ConstructShape(chrono::VECT_Z);
 }
 
 
@@ -76,5 +57,28 @@ void Cuboid::SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeF
 		auto mboxfloor = std::make_shared<chrono::ChBoxShape>();
 		mboxfloor->GetBoxGeometry().Size = chrono::ChVector<>(0.005);
 		constraint->AddAsset(mboxfloor);
+	}
+}
+
+void Cuboid::ConstructShape(const chrono::Vector & orientation)
+{
+	auto vec = orientation * this->m_density;
+	uint16_t size = 0;
+	for (uint16_t index = 0; index < vec.Length(); ++index)
+	{
+		if (vec[index] != 0)
+		{
+			size = vec[index];
+			break;
+		}
+	}
+	for (const auto & block : this->m_meshBlocks)
+	{
+		auto copyBlock = block;
+		for (uint16_t index = 0; index < size; ++index)
+		{
+			copyBlock = copyBlock->Expand(orientation);
+			this->m_meshBlocks.emplace_back(copyBlock);
+		}
 	}
 }
