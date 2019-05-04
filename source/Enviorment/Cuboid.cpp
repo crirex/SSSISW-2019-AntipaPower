@@ -38,8 +38,8 @@ void Cuboid::Build(const chrono::Vector & orientation, const chrono::Vector & or
 	this->m_meshBlocks.emplace_back(meshBlock);
 
 	ConstructShape(chrono::VECT_X);
-	ConstructShape(chrono::VECT_Y);
-	ConstructShape(chrono::VECT_Z);
+	//ConstructShape(chrono::VECT_Y);
+	//ConstructShape(chrono::VECT_Z);
 }
 
 

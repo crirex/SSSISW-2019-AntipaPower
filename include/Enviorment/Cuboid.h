@@ -33,7 +33,7 @@ public:
 
 public:
 	void Build(const chrono::Vector & orientation = chrono::VECT_Y, const chrono::Vector & origin = chrono::Vector(0, 0, 0));
-
+	
 private:
 	void SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes);
 	void ConstructShape(const chrono::Vector & orientation);

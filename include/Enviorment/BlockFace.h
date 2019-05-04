@@ -20,4 +20,3 @@ public:
 private:
 	std::array<std::shared_ptr<chrono::fea::ChNodeFEAxyz>, size> m_nodes;
 };
-

@@ -4,7 +4,9 @@
 #include "chrono/solver/ChSolverMINRES.h"
 #include "chrono_irrlicht/ChIrrApp.h"
 #include "chrono/fea/ChLinkPointFrame.h"
+#include "chrono/fea/ChBuilderBeam.h"
 
+#include "Cable.h"
 #include "Cuboid.h"
 #include "Wall.h"
 
@@ -28,7 +30,6 @@ int main(int argc, char* argv[])
 
 	auto beam = Cuboid(my_system, chrono::Vector(0.5, 0.5, 0.5), chrono::Vector(5, 5, 5));
 
-
 	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam.GetMesh().get()));
 
 	mesh->SetFEMdataType(chrono::fea::ChVisualizationFEAmesh::E_PLOT_ELEM_STRAIN_VONMISES);
@@ -44,15 +45,25 @@ int main(int argc, char* argv[])
 
 	beam.Build(chrono::Vector(1, 0, 0));
 
-	auto lastNode = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(beam.GetMesh()->GetNodes().back());
-	lastNode->SetForce(chrono::Vector(10000, 0, 0));
+	auto cablu = Cable(my_system);
+
+	auto mvisualizebeamA = std::make_shared<ChVisualizationFEAmesh>(*(cablu.GetMesh()));
+	mvisualizebeamA->SetFEMdataType(ChVisualizationFEAmesh::E_PLOT_ELEM_BEAM_MZ);
+	mvisualizebeamA->SetColorscaleMinMax(-0.4, 0.4);
+	mvisualizebeamA->SetSmoothFaces(true);
+	mvisualizebeamA->SetWireframe(false);
+	cablu.SetVisualtizationMesh(mvisualizebeamA);
+
+	auto mvisualizebeamC = std::make_shared<ChVisualizationFEAmesh>(*(cablu.GetMesh()));
+	mvisualizebeamC->SetFEMglyphType(ChVisualizationFEAmesh::E_GLYPH_NODE_DOT_POS); // E_GLYPH_NODE_CSYS
+	mvisualizebeamC->SetFEMdataType(ChVisualizationFEAmesh::E_PLOT_NONE);
+	mvisualizebeamC->SetSymbolsThickness(0.006);
+	mvisualizebeamC->SetSymbolsScale(0.01);
+	mvisualizebeamC->SetZbufferHide(false);
+	cablu.SetVisualtizationMesh(mvisualizebeamC);
 
 
-	/*auto wall = std::make_shared<Wall>(0.3, 0.01, 0.3, 1000, false, true);
-	wall->SetPosition(ChVector<>(0, 0, 0));
-	wall->SetRotation(CH_C_PI / 2, VECT_Z);
-	my_system.Add(wall->GetWall());*/
-
+	cablu.BuildCable(beam);
 
 	application.AssetBindAll();
 	application.AssetUpdateAll();
