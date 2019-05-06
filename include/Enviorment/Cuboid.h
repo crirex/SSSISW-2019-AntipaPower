@@ -1,6 +1,9 @@
 #pragma once
 
 #include <vector>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 #include "fea/ChMesh.h"
 #include "fea/ChElementBeamEuler.h"
@@ -33,6 +36,7 @@ public:
 
 public:
 	void Build(const chrono::Vector & orientation = chrono::VECT_Y, const chrono::Vector & origin = chrono::Vector(0, 0, 0));
+	void StartLogStrained() const;
 	
 private:
 	void SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes);

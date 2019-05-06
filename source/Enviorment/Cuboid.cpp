@@ -42,6 +42,36 @@ void Cuboid::Build(const chrono::Vector & orientation, const chrono::Vector & or
 	//ConstructShape(chrono::VECT_Z);
 }
 
+void Cuboid::StartLogStrained() const
+{
+	std::ofstream out;
+	out.open("node_info.txt");
+	size_t blockNo = 0;
+	for (const auto & block : this->m_meshBlocks)
+	{
+		size_t faceNo = 0;
+		for (const auto& face : block->GetFaces())
+		{
+			for (const auto& node : face.GetNodes())
+			{
+				out << "Block: " << blockNo << ", Face: " << faceNo << ", Node: " << node->GetIndex() << ", Force X: " << node->GetPos().x() << ", Y: " << node->GetPos().y() << ", Z: " << node->GetPos().z() << std::endl;
+			}
+			faceNo++;
+		}
+		blockNo++;
+	}
+	out << "Stress for each element. " << std::endl;
+	for (unsigned int iele = 0; iele < this->m_mesh->GetNelements(); iele++) 
+	{
+		if (auto element = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(this->m_mesh->GetElement(iele)))
+		{
+			auto StrainV = element->GetStrain();
+			out << "Strain On Thetra No: " << iele << ", X: " << StrainV.XX() << " , Y: " << StrainV.YY() << ", Z: " << StrainV.ZZ() << std::endl;
+		}
+	}
+	out.close();
+}
+
 
 void Cuboid::SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes)
 {
