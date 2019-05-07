@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+#include <fstream>
 #include <vector>
 
 #include "fea/ChMesh.h"
@@ -26,6 +28,7 @@ public:
 
 public:
 	void Build(const chrono::Vector & blockSize, int blocks, const chrono::Vector & orientation = chrono::VECT_Y, const chrono::Vector & origin = chrono::Vector(0, 0, 0));
+	void StartLogStrained() const;
 
 private:
 	void BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation);

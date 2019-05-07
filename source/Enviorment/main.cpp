@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	{
 		double step = realtime_timer.SuggestSimulationStep(render_step_size);
 		application.SetTimestep(step);
-		//beam.StartLogStrained();
+		beam.StartLogStrained();
 		application.BeginScene();
 		application.DrawAll();
 		application.DoStep();
