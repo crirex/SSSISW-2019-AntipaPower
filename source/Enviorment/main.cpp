@@ -17,6 +17,9 @@ using namespace chrono::fea;
 using namespace chrono::irrlicht;
 using namespace irr;
 
+// Time interval between two render frames
+double render_step_size = 1.0 / 50; // FPS = 50  == 0.02
+
 int main(int argc, char* argv[])
 {
 	SetChronoDataPath(CHRONO_DATA_DIR);
@@ -75,22 +78,24 @@ int main(int argc, char* argv[])
 	my_system.SetMaxItersSolverSpeed(460);
 	my_system.SetMaxItersSolverStab(460);
 	my_system.SetTolForce(0.1e-13);
-	//my_system.SetEndTime(); Cu asta putem limita timpul de execute(folositor la chestia cu 200 de frame-uri?)
-	/*my_system.SetEndTime(0.1);
-	my_system.SetSt
-	std::cout << my_system.GetEndTime();*/
 
 	auto msolver = std::static_pointer_cast<ChSolverMINRES>(my_system.GetSolver());
 	msolver->SetVerbose(false);
 	msolver->SetDiagonalPreconditioning(true);
 
+	ChRealtimeStepTimer realtime_timer;
+	size_t stepCount = 0;
+
 	while (application.GetDevice()->run())
 	{
+		double step = realtime_timer.SuggestSimulationStep(render_step_size);
+		application.SetTimestep(step);
 		beam.StartLogStrained();
 		application.BeginScene();
 		application.DrawAll();
 		application.DoStep();
 		application.EndScene();
+		stepCount > 200 ? application.GetDevice()->closeDevice() : ++stepCount;
 	}
 
 	Exporter::WriteMesh(beam.GetMesh(), "beamWriteMesh");
