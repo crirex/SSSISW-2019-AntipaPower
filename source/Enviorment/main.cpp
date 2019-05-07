@@ -8,7 +8,7 @@
 #include "chrono/fea/ChMeshExporter.h"
 
 #include "Cable.h"
-#include "Cuboid.h"
+#include "Beam.h"
 #include "Wall.h"
 #include "Exporter.h"
 
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	application.AddTypicalLights();
 	application.AddTypicalCamera(core::vector3df(3, 3, 3));
 
-	auto beam = Cuboid(my_system, chrono::Vector(0.5, 0.5, 0.5), chrono::Vector(5, 5, 5));
+	auto beam = Beam(my_system);
 
 	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam.GetMesh().get()));
 
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
 	material->Set_v(0.3);
 	beam.SetMaterial(material);
 
-	beam.Build(chrono::Vector(1, 0, 0));
+	beam.Build(chrono::Vector(0.5, 0.5, 0.5), 6, chrono::Vector(1, 0, 0), chrono::Vector(0, 0, 0));
 
 	auto cablu = Cable(my_system);
 
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	{
 		double step = realtime_timer.SuggestSimulationStep(render_step_size);
 		application.SetTimestep(step);
-		beam.StartLogStrained();
+		//beam.StartLogStrained();
 		application.BeginScene();
 		application.DrawAll();
 		application.DoStep();

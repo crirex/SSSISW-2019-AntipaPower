@@ -21,12 +21,12 @@ void Cable::SetVisualtizationMesh(const std::shared_ptr<chrono::fea::ChVisualiza
 	this->m_mesh->AddAsset(visualtiozationMesh);
 }
 
-void Cable::BuildCable(Cuboid& beam)
+void Cable::BuildCable(Beam& beam)
 {
 	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> nodes
 	{
-		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end() - 3)),
-		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end() - 4))
+		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end()-1)),
+		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end()-4))
 	};
 
 	ConstructBase(nodes);

@@ -7,7 +7,7 @@
 #include "chrono/physics/ChBodyEasy.h"
 #include <cmath>
 
-#include "Cuboid.h"
+#include "Beam.h"
 
 class Cable
 {
@@ -18,7 +18,7 @@ public:
 	const std::shared_ptr<chrono::fea::ChMesh>& GetMesh() const;
 
 	void SetVisualtizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh>& visualtiozationMesh);
-	void BuildCable(Cuboid& beam);
+	void BuildCable(Beam& beam);
 
 private:
 	void InitializeSectionCable();

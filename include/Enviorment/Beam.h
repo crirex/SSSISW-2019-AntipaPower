@@ -1,9 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <fstream>
-#include <iostream>
-#include <string>
 
 #include "fea/ChMesh.h"
 #include "fea/ChElementBeamEuler.h"
@@ -14,33 +11,28 @@
 #include "chrono/fea/ChElementTetra_4.h"
 #include "chrono/fea/ChLinkPointFrame.h"
 
-#include "MeshBlock.h"
-
-class Cuboid
+class Beam
 {
 
 public:
-	Cuboid(chrono::ChSystemNSC & system);
-	Cuboid(chrono::ChSystemNSC & system,
-		const chrono::ChVector<> & blockSize,
-		const chrono::ChVector<> & size = chrono::Vector(1, 1, 1));
-	~Cuboid() = default;
+	Beam(chrono::ChSystemNSC & system);
+	~Beam() = default;
 
 public:
-	///Getters
 	const std::shared_ptr<chrono::fea::ChMesh> & GetMesh() const;
 
-	///Setters
 	void SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material);
 	void SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization);
 
 public:
-	void Build(const chrono::Vector & orientation = chrono::VECT_Y, const chrono::Vector & origin = chrono::Vector(0, 0, 0));
-	void StartLogStrained() const;
-	
+	void Build(const chrono::Vector & blockSize, int blocks, const chrono::Vector & orientation = chrono::VECT_Y, const chrono::Vector & origin = chrono::Vector(0, 0, 0));
+
 private:
+	void BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation);
 	void SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes);
-	void ConstructShape(const chrono::Vector & orientation);
+
+	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> BuildBase(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size);
+	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> ConstructBlockNodes(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size);
 
 private:
 	chrono::ChSystemNSC & m_refSystem;
@@ -49,10 +41,11 @@ private:
 	std::shared_ptr<chrono::fea::ChMesh> m_mesh;
 	std::shared_ptr<chrono::fea::ChContinuumElastic> m_material;
 
-	chrono::Vector m_size;
-	chrono::Vector m_density;
-
-	std::vector<std::shared_ptr<MeshBlock>> m_meshBlocks;
+	chrono::Vector m_orientation;
+	chrono::Vector m_blockSize;
+	int m_blocks;
+private:
+	const uint8_t baseSize = 4;
 };
 
 

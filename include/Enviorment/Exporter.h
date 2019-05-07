@@ -11,7 +11,7 @@
 #include "chrono/fea/ChElementShellANCF.h"
 
 #include "Cable.h"
-#include "Cuboid.h"
+#include "Beam.h"
 #include "Wall.h"
 
 using namespace chrono;
