@@ -7,10 +7,13 @@
 #include "chrono/fea/ChBuilderBeam.h"
 #include "chrono/fea/ChMeshExporter.h"
 
+#include <algorithm>
+
 #include "Cable.h"
 #include "Beam.h"
 #include "Wall.h"
 #include "Exporter.h"
+#include "main.h"
 
 using namespace chrono;
 using namespace chrono::fea;
@@ -32,22 +35,27 @@ int main(int argc, char* argv[])
 	application.AddTypicalLights();
 	application.AddTypicalCamera(core::vector3df(3, 3, 3));
 
-	auto beam = Beam(my_system);
+	auto wall = std::make_shared<Wall>(5, 0.1, 5, 1000, false, true);
+	wall->SetPosition(ChVector<>(0, 0, 0));
+	wall->SetRotation(CH_C_PI / 2, VECT_Z);
+	my_system.Add(wall->GetWall());
 
-	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam.GetMesh().get()));
+	auto beam = std::make_shared<Beam>(my_system);
+
+	auto mesh = std::make_shared<chrono::fea::ChVisualizationFEAmesh>(*(beam->GetMesh().get()));
 
 	mesh->SetFEMdataType(chrono::fea::ChVisualizationFEAmesh::E_PLOT_ELEM_STRAIN_VONMISES);
 	mesh->SetColorscaleMinMax(-0.5, 0.5);
 	mesh->SetSmoothFaces(true);
 	mesh->SetWireframe(false);
-	beam.SetVisualizationMesh(mesh);
+	beam->SetVisualizationMesh(mesh);
 
 	auto material = std::make_shared<chrono::fea::ChContinuumPlasticVonMises>();
 	material->Set_E(0.005e9);  // rubber 0.01e9, steel 200e9 
 	material->Set_v(0.3);
-	beam.SetMaterial(material);
+	beam->SetMaterial(material);
 
-	beam.Build(chrono::Vector(0.5, 0.5, 0.5), 6, chrono::Vector(1, 0, 0), chrono::Vector(0, 0, 0));
+	beam->Build(chrono::Vector(0.5, 0.5, 0.5), 6, chrono::Vector(1, 0, 0), chrono::Vector(0, 0, 0));
 
 	auto cablu = Cable(my_system);
 
@@ -67,7 +75,7 @@ int main(int argc, char* argv[])
 	cablu.SetVisualtizationMesh(mvisualizebeamC);
 
 
-	cablu.ConstructCableFromBeam(beam);
+	cablu.ConstructCableFromBeam(*beam);
 
 	application.AssetBindAll();
 	application.AssetUpdateAll();
@@ -83,6 +91,22 @@ int main(int argc, char* argv[])
 	msolver->SetVerbose(false);
 	msolver->SetDiagonalPreconditioning(true);
 
+
+
+	
+	/*auto elements = beam->GetMesh()->elem
+
+	double value = 0.0;
+	std::for_each(elements.begin(), elements.end(), [&](std::shared_ptr<chrono::fea::ChElementBase> & element) {
+		auto tetra = std::dynamic_pointer_cast<ChElementTetra_4>(element);
+		if (tetra != nullptr)
+		{
+			elements.erase(std::remove(elements.begin(), elements.end(), element));
+		}
+	});*/
+
+
+
 	ChRealtimeStepTimer realtime_timer;
 	size_t stepCount = 0;
 
@@ -90,17 +114,18 @@ int main(int argc, char* argv[])
 	{
 		double step = realtime_timer.SuggestSimulationStep(render_step_size);
 		application.SetTimestep(step);
-		beam.StartLogStrained();
+		beam->StartLogStrained();
 		application.BeginScene();
 		application.DrawAll();
 		application.DoStep();
 		application.EndScene();
-		stepCount > 200 ? application.GetDevice()->closeDevice() : ++stepCount;
+		//stepCount > 200 ? application.GetDevice()->closeDevice() : ++stepCount;
 	}
 
-	Exporter::WriteMesh(beam.GetMesh(), "beamWriteMesh");
+
+	Exporter::WriteMesh(beam->GetMesh(), "beamWriteMesh");
 	char buffer[256] = "beamWriteFrame.vtk";
-	Exporter::WriteFrame(beam.GetMesh(), buffer, "beamWriteMesh");
+	Exporter::WriteFrame(beam->GetMesh(), buffer, "beamWriteMesh");
 
 	return 0;
 }

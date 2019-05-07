@@ -36,7 +36,6 @@ private:
 
 	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> BuildBase(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size);
 	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> ConstructBlockNodes(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size);
-
 private:
 	chrono::ChSystemNSC & m_refSystem;
 

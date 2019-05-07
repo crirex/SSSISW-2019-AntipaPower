@@ -57,7 +57,7 @@ void Cable::ConstructBase(std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>
 
 void Cable::ConstructWeight()
 {
-	auto box = std::make_shared<chrono::ChBodyEasyBox>(1, 1, 1, 10000);
+	auto box = std::make_shared<chrono::ChBodyEasyBox>(1, 1, 1, 1000);
 	box->SetPos(m_builder.GetLastBeamNodes().back()->GetPos() + chrono::ChVector<>(0.1, 0, 0));
 	this->m_refSystem.Add(box);
 
