@@ -13,15 +13,11 @@
 #include "Beam.h"
 #include "Wall.h"
 #include "Exporter.h"
-#include "main.h"
 
 using namespace chrono;
 using namespace chrono::fea;
 using namespace chrono::irrlicht;
 using namespace irr;
-
-// Time interval between two render frames
-double render_step_size = 1.0 / 50; // FPS = 50  == 0.02
 
 int main(int argc, char* argv[])
 {
@@ -112,7 +108,7 @@ int main(int argc, char* argv[])
 
 	while (application.GetDevice()->run())
 	{
-		double step = realtime_timer.SuggestSimulationStep(render_step_size);
+		double step = realtime_timer.SuggestSimulationStep(1.0 / 50); //render step is set to 50 frames per second
 		application.SetTimestep(step);
 		beam->StartLogStrained();
 		application.BeginScene();
