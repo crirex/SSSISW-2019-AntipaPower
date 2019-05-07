@@ -1,11 +1,11 @@
 #include "Cable.h"
 
-Cable::Cable(chrono::ChSystemNSC& system):
+Cable::Cable(chrono::ChSystemNSC& system) :
 	m_refSystem(system)
 {
 	this->m_mesh = std::make_shared<chrono::fea::ChMesh>();
 	this->m_base = std::make_shared<chrono::ChBody>();
-	
+
 	this->m_refSystem.Add(this->m_mesh);
 	this->m_refSystem.Add(this->m_base);
 	InitializeSectionCable();
@@ -25,27 +25,50 @@ void Cable::BuildCable(Beam& beam)
 {
 	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> nodes
 	{
-		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end()-1)),
-		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end()-4))
+		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end() - 1)),
+		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(*(beam.GetMesh()->GetNodes().end() - 4))
 	};
 
 	ConstructBase(nodes);
+	nodes.emplace_back(std::make_shared<chrono::fea::ChNodeFEAxyz>
+		(chrono::ChVector<>(nodes[0]->GetPos().x(), -2, (nodes[0]->GetPos().z() + nodes[1]->GetPos().z()) / 2)));
 
-	for (const auto& node : nodes)
-	{
-		auto constraintOverBean = std::make_shared<chrono::fea::ChLinkPointFrame>();
-		this->m_builder.BuildBeam(this->m_mesh, this->m_sectionCable, 1, node->GetPos(), node->GetPos() + chrono::VECT_Y * -2);
-		constraintOverBean->Initialize(this->m_builder.GetLastBeamNodes().front(), this->m_base);
-		this->m_refSystem.Add(constraintOverBean);
+	///First cable
+	this->m_builder.BuildBeam(this->m_mesh, this->m_sectionCable, 1, nodes[0]->GetPos(), nodes[2]->GetPos() /*+ chrono::VECT_Y * -2*/);
+	auto constraintOverFirstNode = std::make_shared<chrono::fea::ChLinkPointFrame>();
+	constraintOverFirstNode->Initialize(this->m_builder.GetLastBeamNodes().front(), this->m_base);
+	this->m_refSystem.Add(constraintOverFirstNode);
 
-		auto mbox = std::make_shared<chrono::ChBodyEasyBox>(1, 1, 1 , 1000);
-		mbox->SetPos(m_builder.GetLastBeamNodes().back()->GetPos() + chrono::ChVector<>(0.1, 0, 0));
-		this->m_refSystem.Add(mbox);
+	auto constraintOverJuncture1 = std::make_shared<chrono::fea::ChLinkPointFrame>();
+	constraintOverJuncture1->Initialize(this->m_builder.GetLastBeamNodes().back(), this->m_base);
+	this->m_refSystem.Add(constraintOverJuncture1);
+	///
 
-		auto constraint_pos = std::make_shared<chrono::fea::ChLinkPointFrame>();
-		constraint_pos->Initialize(this->m_builder.GetLastBeamNodes().back(), mbox);
-		this->m_refSystem.Add(constraint_pos);
-	}
+	///Second Cable
+	this->m_builder.BuildBeam(this->m_mesh, this->m_sectionCable, 1, nodes[1]->GetPos(), nodes[2]->GetPos());
+	auto constraintOverSecondNode = std::make_shared<chrono::fea::ChLinkPointFrame>();
+	constraintOverSecondNode->Initialize(this->m_builder.GetLastBeamNodes().front(), this->m_base);
+	this->m_refSystem.Add(constraintOverSecondNode);
+
+	auto constraintOverJuncture2 = std::make_shared<chrono::fea::ChLinkPointFrame>();
+	constraintOverJuncture2->Initialize(this->m_builder.GetLastBeamNodes().back(), this->m_base);
+	this->m_refSystem.Add(constraintOverJuncture2);
+	///
+
+	///Third cable
+	this->m_builder.BuildBeam(this->m_mesh, this->m_sectionCable, 1, nodes[2]->GetPos(), nodes[2]->GetPos() + chrono::VECT_Y * -1);
+	auto constraintOverThirdNode = std::make_shared<chrono::fea::ChLinkPointFrame>();
+	constraintOverThirdNode->Initialize(this->m_builder.GetLastBeamNodes().front(), this->m_base);
+	this->m_refSystem.Add(constraintOverThirdNode);
+	///
+
+	auto box = std::make_shared<chrono::ChBodyEasyBox>(1, 1, 1, 10000);
+	box->SetPos(m_builder.GetLastBeamNodes().back()->GetPos() + chrono::ChVector<>(0.1, 0, 0));
+	this->m_refSystem.Add(box);
+
+	auto constraintPos = std::make_shared<chrono::fea::ChLinkPointFrame>();
+	constraintPos->Initialize(this->m_builder.GetLastBeamNodes().back(), box);
+	this->m_refSystem.Add(constraintPos);
 }
 
 void Cable::InitializeSectionCable()
