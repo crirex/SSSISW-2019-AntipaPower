@@ -18,12 +18,13 @@ public:
 	const std::shared_ptr<chrono::fea::ChMesh>& GetMesh() const;
 
 	void SetVisualtizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh>& visualtiozationMesh);
-	void BuildCable(Beam& beam);
+	void ConstructCableFromBeam(Beam& beam);
 
 private:
 	void InitializeSectionCable();
 	void ConstructBase(std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> nodes);
-
+	void ConstructWeight();
+	void ConstructCables(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> nodes);
 private:
 	std::shared_ptr<chrono::fea::ChMesh> m_mesh;
 	std::shared_ptr<chrono::fea::ChBeamSectionCable> m_sectionCable;

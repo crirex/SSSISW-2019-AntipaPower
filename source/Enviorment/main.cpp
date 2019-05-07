@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 	cablu.SetVisualtizationMesh(mvisualizebeamC);
 
 
-	cablu.BuildCable(beam);
+	cablu.ConstructCableFromBeam(beam);
 
 	application.AssetBindAll();
 	application.AssetUpdateAll();
