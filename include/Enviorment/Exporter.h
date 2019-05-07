@@ -22,4 +22,7 @@ class Exporter
 public:
 	static void WriteMesh(std::shared_ptr<ChMesh> my_mesh, std::string SaveAs);
 	static void WriteFrame(std::shared_ptr<ChMesh> my_mesh, char SaveAsBuffer[256], std::string MeshFileBuffer);
+
+private:
+	static void EvaluateDeflection(std::shared_ptr<ChElementTetra_4>& element, double & def);
 };
