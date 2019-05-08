@@ -103,12 +103,11 @@ int main(int argc, char* argv[])
 
 		mesh->ClearElements();
 
-		auto minmaxTetra = std::minmax_element(elements.begin(), elements.end(), [](std::shared_ptr<chrono::fea::ChElementBase> first,
-			std::shared_ptr<chrono::fea::ChElementBase> second) {
+		auto minmaxTetra = std::minmax_element(elements.begin(), elements.end(), [](auto first,
+			auto second) {
 			auto firstStrain = std::dynamic_pointer_cast<ChElementTetra_4>(first)->GetStrain();
 			auto secondStrain = std::dynamic_pointer_cast<ChElementTetra_4>(second)->GetStrain();
-			//return firstStrain.GetEquivalentOctahedralDeviatoric() > secondStrain.GetEquivalentOctahedralDeviatoric(); //Asta face OK
-			return firstStrain.GetEquivalentVonMises() > secondStrain.GetEquivalentVonMises(); //Ambele return-uri par sa mearga bine
+			return firstStrain.GetEquivalentVonMises() > secondStrain.GetEquivalentVonMises();
 		});
 
 		for each (auto element in elements)
@@ -130,7 +129,6 @@ int main(int argc, char* argv[])
 		application.DrawAll();
 		application.DoStep();
 		application.EndScene();
-		//stepCount > 200 ? application.GetDevice()->closeDevice() : ++stepCount;
 		stepCount == 200 ? modificationFunction() : ++stepCount;
 	};
 
