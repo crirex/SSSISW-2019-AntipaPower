@@ -6,7 +6,7 @@ Beam::Beam(chrono::ChSystemNSC & system) : m_refSystem(system)
 	this->m_refSystem.Add(this->m_mesh);
 }
 
-const std::shared_ptr<chrono::fea::ChMesh> & Beam::GetMesh() const
+std::shared_ptr<chrono::fea::ChMesh> & Beam::GetMesh()
 {
 	return this->m_mesh;
 }
@@ -44,7 +44,7 @@ void Beam::StartLogStrained() const
 			out << "Strain On Thetra No: " << iele << ", X: " << StrainV.XX() << " , Y: " << StrainV.YY() << ", Z: " << StrainV.ZZ() << std::endl;
 			for (size_t nodeIndex = 0; nodeIndex < element->GetNnodes(); ++nodeIndex)
 			{
-				auto node = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(element->GetNodeN(nodeIndex));
+				auto node = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(element->GetNodeN(static_cast<int>(nodeIndex)));
 				out << "Node: " << node->GetIndex() << ", Pos X : " << node->GetPos().x() << ", Y : " << node->GetPos().y() << ", Z : " << node->GetPos().z() << std::endl;
 			}
 		}

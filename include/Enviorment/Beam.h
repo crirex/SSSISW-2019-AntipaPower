@@ -21,7 +21,7 @@ public:
 	~Beam() = default;
 
 public:
-	const std::shared_ptr<chrono::fea::ChMesh> & GetMesh() const;
+	std::shared_ptr<chrono::fea::ChMesh> & GetMesh();
 
 	void SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material);
 	void SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization);

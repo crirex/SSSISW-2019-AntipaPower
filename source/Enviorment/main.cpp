@@ -87,24 +87,39 @@ int main(int argc, char* argv[])
 	msolver->SetVerbose(false);
 	msolver->SetDiagonalPreconditioning(true);
 
-
-
-	
-	/*auto elements = beam->GetMesh()->elem
-
-	double value = 0.0;
-	std::for_each(elements.begin(), elements.end(), [&](std::shared_ptr<chrono::fea::ChElementBase> & element) {
-		auto tetra = std::dynamic_pointer_cast<ChElementTetra_4>(element);
-		if (tetra != nullptr)
-		{
-			elements.erase(std::remove(elements.begin(), elements.end(), element));
-		}
-	});*/
-
-
-
 	ChRealtimeStepTimer realtime_timer;
 	size_t stepCount = 0;
+
+	auto modificationFunction = [&]()
+	{
+		++stepCount;
+		auto& mesh = beam->GetMesh();
+		auto elements = mesh->GetElements();
+		auto oldClone = std::make_shared<ChMesh>(*mesh->Clone());
+
+		Exporter::WriteMesh(oldClone, "beamWriteMesh");
+		std::string buffer = "beamWriteFrameBefore.vtk";
+		Exporter::WriteFrame(oldClone, buffer, "beamWriteMesh");
+
+		mesh->ClearElements();
+
+		auto minmaxTetra = std::minmax_element(elements.begin(), elements.end(), [](std::shared_ptr<chrono::fea::ChElementBase> first,
+			std::shared_ptr<chrono::fea::ChElementBase> second) {
+			auto firstStrain = std::dynamic_pointer_cast<ChElementTetra_4>(first)->GetStrain();
+			auto secondStrain = std::dynamic_pointer_cast<ChElementTetra_4>(second)->GetStrain();
+			//return firstStrain.GetEquivalentOctahedralDeviatoric() > secondStrain.GetEquivalentOctahedralDeviatoric(); //Asta face OK
+			return firstStrain.GetEquivalentVonMises() > secondStrain.GetEquivalentVonMises(); //Ambele return-uri par sa mearga bine
+		});
+
+		for each (auto element in elements)
+		{
+			if (element.get() != (*minmaxTetra.first).get() &&
+				element.get() != (*minmaxTetra.second).get())
+			{
+				mesh->AddElement(element);
+			}
+		}
+	};
 
 	while (application.GetDevice()->run())
 	{
@@ -116,11 +131,11 @@ int main(int argc, char* argv[])
 		application.DoStep();
 		application.EndScene();
 		//stepCount > 200 ? application.GetDevice()->closeDevice() : ++stepCount;
-	}
-
+		stepCount == 200 ? modificationFunction() : ++stepCount;
+	};
 
 	Exporter::WriteMesh(beam->GetMesh(), "beamWriteMesh");
-	char buffer[256] = "beamWriteFrame.vtk";
+	std::string buffer = "beamWriteFrameAfter.vtk";
 	Exporter::WriteFrame(beam->GetMesh(), buffer, "beamWriteMesh");
 
 	return 0;
