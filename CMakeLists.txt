@@ -58,9 +58,6 @@ project(AMMO)
 # In this example, we only request the Irrlicht module (required)
 #--------------------------------------------------------------
 
-SET(Chrono_DIR "${AMMO_SOURCE_DIR}/../chrono_build/cmake")
-
-LIST(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/../Chrono/lib")
 find_package(Chrono
              COMPONENTS Irrlicht
              CONFIG)
@@ -75,7 +72,8 @@ find_package(Chrono
 
 if (NOT Chrono_FOUND)
   message("Could not find Chrono or one of its required modules")
-  return()
+  SET(Chrono_DIR "${AMMO_SOURCE_DIR}/../chrono_build/cmake")
+  LIST(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/../Chrono/lib")
 endif()
 
 #--------------------------------------------------------------
@@ -191,10 +189,10 @@ target_link_libraries(AMMO ${CHRONO_LIBRARIES})
 #add_DLL_copy_command("${CHRONO_DLLS}")
 
 set (DEBUG_PATH ${AMMO_SOURCE_DIR}/build/Debug)
-set (CHRONO_DEBUG_PATH ${AMMO_SOURCE_DIR}/../chrono_build/bin/Debug)
+set (CHRONO_DEBUG_PATH ${Chrono_DIR}/../bin/Debug)
 
 set (RELEASE_PATH ${AMMO_SOURCE_DIR}/build/Release)
-set (CHRONO_RELEASE_PATH ${AMMO_SOURCE_DIR}/../chrono_build/bin/Release)
+set (CHRONO_RELEASE_PATH ${Chrono_DIR}/../bin/Release)
 
 file(COPY
    ${CHRONO_RELEASE_PATH}/ChronoEngine.dll
