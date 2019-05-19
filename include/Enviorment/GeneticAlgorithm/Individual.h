@@ -11,8 +11,8 @@ public:
 	Individual(const int numberOfChromosomes );
 	~Individual() = default;
 
-	void printChromosomes();
-	std::vector<Chromosome<size>>& getChromosomes();
+	void PrintChromosomes();
+	std::vector<Chromosome<size>>& GetChromosomes();
 private:
 	std::vector<Chromosome<size>> m_chromosomes;
 };
@@ -27,16 +27,16 @@ inline Individual<size>::Individual(const int numberOfChromosomes)
 }
 
 template<size_t size>
-inline void Individual<size>::printChromosomes()
+inline void Individual<size>::PrintChromosomes()
 {
 	for (auto& ch : this->m_chromosomes)
 	{
-		std::cout << ch.getGenes() << "\n";
+		std::cout << ch.GetGenes() << "\n";
 	}
 }
 
 template<size_t size>
-inline std::vector<Chromosome<size>>& Individual<size>::getChromosomes()
+inline std::vector<Chromosome<size>>& Individual<size>::GetChromosomes()
 {
 	return this->m_chromosomes;
 }

@@ -11,14 +11,14 @@ template <size_t size = kDefaultNumberOfGenes>
 class Chromosome
 {
 private:
-	void generatedRandomChromosome();
+	void GenerateRandomChromosome();
 public:
 	Chromosome();
 	~Chromosome() = default;
 
-	const unsigned long getDecimalValue() const;
-	std::bitset<size>& getGenes() ;	
-	const double getValueInInterval(const int lowerBound, const int upperBound) const;
+	unsigned long GetDecimalValue() const;
+	std::bitset<size>& GetGenes() ;	
+	double GetValueInInterval(const int lowerBound, const int upperBound) const;
 private:
 	std::bitset<size> m_genes;
 };
@@ -26,33 +26,33 @@ private:
 template<size_t size>
 inline Chromosome<size>::Chromosome()
 {
-	generatedRandomChromosome();
+	GenerateRandomChromosome();
 }
 
 template<size_t size>
-inline const unsigned long Chromosome<size>::getDecimalValue() const
+inline unsigned long Chromosome<size>::GetDecimalValue() const
 {
 	return this->m_genes.to_ulong();
 }
 
 template<size_t size>
-inline std::bitset<size>& Chromosome<size>::getGenes()
+inline std::bitset<size>& Chromosome<size>::GetGenes()
 {
 	return this->m_genes;
 }
 
 template<size_t size>
-inline void Chromosome<size>::generatedRandomChromosome()
+inline void Chromosome<size>::GenerateRandomChromosome()
 {
 	const int kLowerBound = 0, kUpperBound = 1;
 	for (size_t index = 0; index < this->m_genes.size(); ++index)
 	{
-		this->m_genes[index] = RandomGenerator::getIntegerInRange(kLowerBound, kUpperBound);
+		this->m_genes[index] = RandomGenerator::GetIntegerInRange(kLowerBound, kUpperBound);
 	}
 }
 
 template<size_t size>
-inline const double Chromosome<size>::getValueInInterval(const int lowerBound, const int upperBound) const
+inline double Chromosome<size>::GetValueInInterval(const int lowerBound, const int upperBound) const
 {
 	return lowerBound + this->m_genes.to_ulong() * ((upperBound - lowerBound) / (pow(2, size)));
 }
