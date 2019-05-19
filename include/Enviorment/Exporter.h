@@ -13,9 +13,6 @@
 #include "chrono/fea/ChLinkPointFrame.h"
 #include "chrono/fea/ChElementShellANCF.h"
 
-#include "Cable.h"
-#include "Beam.h"
-#include "Wall.h"
 
 using namespace chrono;
 using namespace chrono::fea;

@@ -128,32 +128,57 @@ file(GLOB_RECURSE SRCS
 	"${SRCROOT}/*.cpp"
 )
 
-file(GLOB_RECURSE SRC_EnviormentS
-    "${SRCROOT}/Enviorment/*.cpp"
-)
-file(GLOB_RECURSE SRC_OptimizerS
-    "${SRCROOT}/Optimizer/*.cpp"
-)
-file(GLOB_RECURSE SRC_EnviormentI
-    "${INCROOT}/Enviorment/*.h"
-)
-file(GLOB_RECURSE SRC_OptimizerI
-    "${INCROOT}/Optimizer/*.h"
-)
-
 add_executable(AMMO 
 ${INCS} 
 ${SRCS}
-${SRC_EnviormentS}
-${SRC_OptimizerS}
-${SRC_EnviormentI}
-${SRC_OptimizerI}
 )
 
-source_group("Source files\\Enviorment" FILES ${SRC_EnviormentS})
-source_group("Source files\\Optimizer" FILES ${SRC_OptimizerS})
-source_group("Include files\\Enviorment" FILES ${SRC_EnviormentI})
-source_group("Include files\\Optimizer" FILES ${SRC_OptimizerI})
+foreach(FILE ${SRCS}) 
+    # Get the directory of the source file
+    get_filename_component(PARENT_DIR "${FILE}" DIRECTORY)
+
+    # Remove common directory prefix to make the group
+    string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" GROUP "${PARENT_DIR}")
+
+    # Make sure we are using windows slashes
+    string(REPLACE "/" "\\" GROUP "${GROUP}")
+
+    # Group into "Source Files" and "Header Files"
+    if ("${FILE}" MATCHES ".*\\.cpp")
+       set(GROUP "${GROUP}")
+    elseif("${FILE}" MATCHES ".*\\.h")
+       set(GROUP "${GROUP}")
+    endif()
+
+    source_group("${GROUP}" FILES "${FILE}")
+endforeach()
+
+foreach(FILE ${INCS}) 
+    # Get the directory of the source file
+    get_filename_component(PARENT_DIR "${FILE}" DIRECTORY)
+
+    # Remove common directory prefix to make the group
+    string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" GROUP "${PARENT_DIR}")
+
+    # Make sure we are using windows slashes
+    string(REPLACE "/" "\\" GROUP "${GROUP}")
+
+    # Group into "Source Files" and "Header Files"
+    if ("${FILE}" MATCHES ".*\\.cpp")
+       set(GROUP "${GROUP}")
+    elseif("${FILE}" MATCHES ".*\\.h")
+       set(GROUP "${GROUP}")
+    endif()
+
+    source_group("${GROUP}" FILES "${FILE}")
+endforeach()
+
+#source_group("Source files\\Enviorment" FILES ${SRC_EnviormentS})
+#source_group("Banana" FILES ${SRC_Banana})
+#source_group("Source files\\Optimizer" FILES ${SRC_OptimizerS})
+#source_group("Include files\\Enviorment" FILES ${SRC_EnviormentI})
+#source_group("Include files\\Optimizer" FILES ${SRC_OptimizerI})
+
 
 #--------------------------------------------------------------
 # Set properties for your executable target
@@ -227,10 +252,4 @@ file(COPY
     ${CHRONO_DEBUG_PATH}/Irrlicht.dll
     DESTINATION ${DEBUG_PATH})
 
-
-set (INCLUDE_ENVIORMENT ${AMMO_SOURCE_DIR}/include/Enviorment)
-set (INCLUDE_OPTIMIZER ${AMMO_SOURCE_DIR}/include/Optimizer)
-set (SOURCE_ENVIORMENT ${AMMO_SOURCE_DIR}/source/Enviorment)
-set (SOURCE_OPTIMIZER ${AMMO_SOURCE_DIR}/source/Optimizer)
-
-include_directories(AMMO ${INCLUDE_ENVIORMENT} ${INCLUDE_OPTIMIZER} ${SOURCE_ENVIORMENT} ${SOURCE_OPTIMIZER})
+include_directories(AMMO ${AMMO_SOURCE_DIR}/include)

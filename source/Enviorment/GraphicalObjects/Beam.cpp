@@ -1,38 +1,41 @@
-#include "Beam.h"
+#include "Enviorment/GraphicalObjects/Beam.h"
 
-Beam::Beam(chrono::ChSystemNSC & system) : m_refSystem(system)
+GraphicalObjects::Beam::Beam(const chrono::Vector & blockSize, int blocks, const chrono::Vector & orientation, const chrono::Vector & origin)
 {
 	this->m_mesh = std::make_shared<chrono::fea::ChMesh>();
-	this->m_refSystem.Add(this->m_mesh);
+	this->m_physicsItems.emplace_back(this->m_mesh);
+
+	this->m_blockSize = blockSize;
+	this->m_blocks = blocks;
+	this->m_orientation = orientation;
+	this->m_origin = origin;
 }
 
-std::shared_ptr<chrono::fea::ChMesh> & Beam::GetMesh()
+void GraphicalObjects::Beam::Build()
+{
+	for (uint16_t index = 0; index < this->m_blocks; ++index)
+	{
+		BuildBlock(this->m_origin, this->m_blockSize, this->m_orientation);
+	}
+}
+
+std::shared_ptr<chrono::fea::ChMesh> GraphicalObjects::Beam::GetMesh() const
 {
 	return this->m_mesh;
 }
 
-void Beam::SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material)
+
+void GraphicalObjects::Beam::SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material)
 {
 	this->m_material = material;
 }
 
-void Beam::SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization)
+void GraphicalObjects::Beam::SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization)
 {
 	this->m_mesh->AddAsset(visualization);
 }
 
-void Beam::Build(const chrono::Vector & blockSize, int blocks, const chrono::Vector & orientation, const chrono::Vector & origin)
-{
-	this->m_blockSize = blockSize;
-	this->m_orientation = orientation;
-	this->m_blocks = blocks;
-	for (uint16_t index = 0; index < blocks; ++index)
-	{
-		BuildBlock(origin, blockSize, orientation);
-	}
-}
-
-void Beam::StartLogStrained() const
+void GraphicalObjects::Beam::StartLogStrained() const
 {
 	std::ofstream out;
 	out.open("node_info.txt", std::ios::out | std::ios::trunc);
@@ -52,7 +55,7 @@ void Beam::StartLogStrained() const
 	out.close();
 }
 
-void Beam::BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation)
+void GraphicalObjects::Beam::BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation)
 {
 	auto nodes = ConstructBlockNodes(origin, orientation, size);
 
@@ -71,7 +74,7 @@ void Beam::BuildBlock(const chrono::Vector & origin, const chrono::Vector & size
 	BuildTetra(nodes[6], nodes[7], nodes[1], nodes[5]);
 }
 
-std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> Beam::BuildBase(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size)
+std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> GraphicalObjects::Beam::BuildBase(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size)
 {
 	auto base = chrono::Vector(1) - orientation;
 	auto nodes = std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>({
@@ -94,7 +97,7 @@ std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> Beam::BuildBase(const ch
 	return nodes;
 }
 
-std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> Beam::ConstructBlockNodes(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size)
+std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> GraphicalObjects::Beam::ConstructBlockNodes(const chrono::Vector & origin, const chrono::Vector & orientation, const chrono::Vector & size)
 {
 	std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> nodes;
 	if (!this->m_mesh->GetNodes().size())
@@ -126,15 +129,16 @@ std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> Beam::ConstructBlockNode
 	return nodes;
 }
 
-void Beam::SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes)
+
+void GraphicalObjects::Beam::SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes)
 {
-	this->m_base = std::make_shared<chrono::ChBody>();
-	this->m_base->SetBodyFixed(true);
-	this->m_refSystem.Add(this->m_base);
+	auto base = std::make_shared<chrono::ChBody>();
+	base->SetBodyFixed(true);
+	this->m_physicsItems.emplace_back(base);
 	for (const auto & node : baseNodes)
 	{
 		auto constraint = std::make_shared<chrono::fea::ChLinkPointFrame>();
-		constraint->Initialize(node, this->m_base);
-		this->m_refSystem.Add(constraint);
+		constraint->Initialize(node, base);
+		this->m_physicsItems.emplace_back(constraint);
 	}
 }
