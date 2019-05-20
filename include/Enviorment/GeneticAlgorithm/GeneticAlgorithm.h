@@ -14,15 +14,18 @@ private:
 	void CalculateProbabilityOfSelection(std::vector<double> &probabilityOfSelection, double sumOfFitness);
 	void CalculateSumOfFitnessFunction(double& sumOfFitness);
 	bool IsInInterval(const double number, const double lowerBound, const double upperBound) const;
+	void ChangeGenes(Individual<size>& first, Individual<size>& second, const int randomSize);
 public:
-	GeneticAlgorithm(std::function<double(double)> fitnessFunction, const size_t initialPopulationSize = 6, const size_t numberOfEpochs = 300, const double crossoverProb = 0.3, const double mutationProb = 0.3, const size_t chNumber = 1);
+	GeneticAlgorithm(std::function<double(double)> fitnessFunction, const size_t initialPopulationSize = 200, const size_t numberOfEpochs = 300, const double crossoverProb = 0.1, const double mutationProb = 0.01, const size_t chNumber = 1);
 	~GeneticAlgorithm() = default;
 
 	std::vector<Individual<size>>& GetIndividuals();
 	double GetResult(const double number) const;
 
-
-	std::vector<Individual<size>> Selection();
+	void Selection();
+	void Crossover();
+	void Mutation();
+	void RunAlgorithm();
 private:
 	std::vector<Individual<size>> m_individuals;
 	double m_crossoverProbability;
@@ -44,45 +47,120 @@ inline void GeneticAlgorithm<size>::InitalizePopulation()
 
 //gonna make it work on a single variable
 template<size_t size>
-inline std::vector<Individual<size>> GeneticAlgorithm<size>::Selection()
+inline void GeneticAlgorithm<size>::Selection()
 {
 	double sumOfFitness = 0;
 	std::vector<double> probabilityOfSelection{};
 	std::vector<double> cumulativeProbabilityVector{};
-	std::vector<double> randomNumbers = RandomGenerator::GenerateRealNumbers(0, 1, this->m_populationSize);
+	std::vector<double> randomNumbers = RandomGenerator::GenerateRealNumbers(0, 1, this->m_individuals.size());
 	std::vector<Individual<size>> newPopulation{};
 
 	CalculateSumOfFitnessFunction(sumOfFitness);
 	CalculateProbabilityOfSelection(probabilityOfSelection, sumOfFitness);
 	CalculateCumulativeProbability(probabilityOfSelection, cumulativeProbabilityVector);
 
-	for (size_t index = 0; index < this->m_populationSize; index++)
+	for (size_t index = 0; index < this->m_individuals.size() - 1; index++)
 	{
 		if (IsInInterval(randomNumbers[index], 0, cumulativeProbabilityVector[index]))
 		{
-			newPopulation.emplace_back(this->m_individuals[index]);
+			// delete + 1 for maximization
+			newPopulation.emplace_back(this->m_individuals[index + 1]);
 		}
 		else
 		{
-			for (size_t index2 = 1; index2 < this->m_populationSize - 1; index2++)
+			newPopulation.emplace_back(this->m_individuals[index]);
+
+			//dis is for maximization
+			/*for (size_t index2 = 1; index2 < this->m_individuals.size() - 1; index2++)
 			{
 				if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2], cumulativeProbabilityVector[index2 + 1]))
 				{
 					newPopulation.emplace_back(this->m_individuals[index2 + 1]);
 					break;
 				}
-			}
+			}*/
 		}
 	}
 
-	std::cout << std::accumulate(probabilityOfSelection.begin(), probabilityOfSelection.end(), 0.0) << std::endl;
-	return this->m_individuals;
+	//std::cout << std::accumulate(probabilityOfSelection.begin(), probabilityOfSelection.end(), 0.0) << std::endl;
+	this->m_individuals = newPopulation;
+}
+
+template<size_t size>
+inline void GeneticAlgorithm<size>::Crossover()
+{
+	std::vector<double> randomNumbers = RandomGenerator::GenerateRealNumbers(0, 1, this->m_individuals.size());
+	std::vector<Individual<size>> selectedPopulationForCrossover{};
+
+	for (size_t index = 0; index < this->m_individuals.size(); ++index)
+	{
+		if (randomNumbers[index] <= this->m_crossoverProbability)
+		{
+			selectedPopulationForCrossover.emplace_back(this->m_individuals[index]);
+		}
+	}
+
+	if (selectedPopulationForCrossover.size() % 2 != 0)
+	{
+		selectedPopulationForCrossover.pop_back();
+	}
+
+	if (selectedPopulationForCrossover.empty())
+	{
+		return;
+	}
+
+	size_t randomSize = RandomGenerator::GetIntegerInRange(1, size - 1);
+
+	for (size_t index = 0; index < selectedPopulationForCrossover.size() - 1; index += 2)
+	{
+		Individual<size>& first = selectedPopulationForCrossover[index];
+		Individual<size>& second = selectedPopulationForCrossover[index + 1];
+
+		ChangeGenes(first, second, randomSize);
+	}
+
+	this->m_individuals = selectedPopulationForCrossover;
+}
+
+template<size_t size>
+inline void GeneticAlgorithm<size>::Mutation()
+{
+	for (auto& individ : this->m_individuals)
+	{
+		for (auto& ch : individ.GetChromosomes())
+		{
+			auto& genes = ch.GetGenes();
+			for (size_t index = 0; index < size; index++)
+			{
+				if (RandomGenerator::GetRealInRange(0, 1) <= this->m_mutationProbability)
+				{
+					genes[index] = 1 - genes[index];
+				}
+			}
+		}
+	}
+}
+
+template<size_t size>
+inline void GeneticAlgorithm<size>::RunAlgorithm()
+{
+	for (size_t index = 0; index < this->m_numberOfEpochs && this->m_individuals.size() > 1; ++index)
+	{
+		std::cout << "Generatia: " << index << "\n";
+		Selection();
+		Crossover();
+		Mutation();
+	}
+
+	double decimalValue = this->m_individuals[0].GetChromosomes().front().GetValueInInterval(-10, 10);
+	std::cout << "x = " << decimalValue << "\nf(x)= " << this->m_fitnessFunction(decimalValue) << std::endl;
 }
 
 template<size_t size>
 inline void GeneticAlgorithm<size>::CalculateCumulativeProbability(std::vector<double> &probabilityOfSelection, std::vector<double> &cumulativeProbabilyVector)
 {
-	for (size_t index1 = 0; index1 < this->m_populationSize; ++index1)
+	for (size_t index1 = 0; index1 < this->m_individuals.size(); ++index1)
 	{
 		double cumulativeProbability{};
 		for (size_t index2 = 0; index2 < index1 + 1; ++index2)
@@ -121,6 +199,22 @@ template<size_t size>
 inline bool GeneticAlgorithm<size>::IsInInterval(const double number, const double lowerBound, const double upperBound) const
 {
 	return number > lowerBound && number <= upperBound;
+}
+
+template<size_t size>
+inline void GeneticAlgorithm<size>::ChangeGenes(Individual<size>& first, Individual<size>& second, const int randomSize)
+{
+	auto& firstGenes = first.GetChromosomes().front().GetGenes();
+	auto& secondGenes = second.GetChromosomes().front().GetGenes();
+
+	auto temp = firstGenes;
+
+	for (size_t index = randomSize; index < size; index++)
+	{
+		firstGenes[index] = secondGenes[index];
+		secondGenes[index] = temp[index];
+	}
+
 }
 
 template<size_t size>
