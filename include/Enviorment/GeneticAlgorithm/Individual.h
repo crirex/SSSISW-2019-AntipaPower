@@ -8,7 +8,7 @@ template <size_t size = kDefaultNumberOfGenes>
 class Individual
 {
 public:
-	Individual(const int numberOfChromosomes );
+	Individual(size_t numberOfChromosomes);
 	~Individual() = default;
 
 	void PrintChromosomes();
@@ -18,7 +18,7 @@ private:
 };
 
 template<size_t size>
-inline Individual<size>::Individual(const int numberOfChromosomes)
+inline Individual<size>::Individual(size_t numberOfChromosomes)
 {
 	for (size_t index = 0; index < numberOfChromosomes; ++index)
 	{

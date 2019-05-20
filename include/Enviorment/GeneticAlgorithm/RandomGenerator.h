@@ -4,11 +4,8 @@
 class RandomGenerator
 {
 public:
-	RandomGenerator() = default;
-	~RandomGenerator() = default;
-
-	static double GetRealInRange(const int lowerBound, const int upperBound);
-	static int GetIntegerInRange(const double lowerBound, const double upperBound);
-	static std::vector<double> GenerateRealNumbers(const int lowerBound, const int upperBound, const int size);
+	static double GetRealInRange(double lowerBound, double upperBound);
+	static int GetIntegerInRange(int lowerBound, int upperBound);
+	static std::vector<double> GenerateRealNumbers(double lowerBound, double upperBound, size_t size);
 };
 

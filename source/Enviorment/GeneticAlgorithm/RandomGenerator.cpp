@@ -1,6 +1,6 @@
-#include "RandomGenerator.h"
+#include "Enviorment/GeneticAlgorithm/RandomGenerator.h"
 
-double RandomGenerator::GetRealInRange(const int lowerBound, const int upperBound)
+double RandomGenerator::GetRealInRange(double lowerBound, double upperBound)
 {
 	std::random_device m_randomDevice;
 	std::mt19937 rng(m_randomDevice());
@@ -9,7 +9,7 @@ double RandomGenerator::GetRealInRange(const int lowerBound, const int upperBoun
 	return distribution(rng);
 }
 
-int RandomGenerator::GetIntegerInRange(const double lowerBound, const double upperBound)
+int RandomGenerator::GetIntegerInRange(int lowerBound, int upperBound)
 {
 	std::random_device m_randomDevice;
 	std::mt19937 rng(m_randomDevice());
@@ -18,13 +18,12 @@ int RandomGenerator::GetIntegerInRange(const double lowerBound, const double upp
 	return distribution(rng);
 }
 
-std::vector<double> RandomGenerator::GenerateRealNumbers(const int lowerBound, const int upperBound, const int size)
+std::vector<double> RandomGenerator::GenerateRealNumbers(double lowerBound, double upperBound, size_t size)
 {
-	std::random_device m_randomDevice;
-	std::mt19937 rng(m_randomDevice());
-	std::uniform_real_distribution<> distribution(lowerBound, upperBound);
-
 	std::vector<double> randomNumbers(size);
-	std::generate(randomNumbers.begin(), randomNumbers.end(), [&]()mutable {return distribution(rng); });
+	std::generate(randomNumbers.begin(), randomNumbers.end(), [&]() {
+		return GetRealInRange(lowerBound, upperBound);
+		});
+
 	return randomNumbers;
 }

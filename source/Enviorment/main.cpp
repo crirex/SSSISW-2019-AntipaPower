@@ -15,6 +15,14 @@
 #include "Enviorment/Services/TetraMeshLoggerService.h"
 #include "Enviorment/Services/MeshOptimizerService.h"
 
+#include "Enviorment/GeneticAlgorithm/GeneticAlgorithm.h"
+
+
+double function(double x)
+{
+	return x * x + 6 * x + 1;
+}
+
 
 int main(int argc, char* argv[]) 
 {
@@ -40,7 +48,6 @@ int main(int argc, char* argv[])
 		std::make_shared<Services::MeshOptimizerService>(),
 		});
 	beamBuilder.Build(system, beam);
-
 	
 	GraphicalBuilder graphicalBuilder({
 		std::make_shared<Services::RenderingService>(),
@@ -52,7 +59,16 @@ int main(int argc, char* argv[])
 	std::string buffer = "beamWriteFrameAfter.vtk";
 	Exporter::WriteFrame(beam->GetMesh(), buffer, "beamWriteMesh");
 
-	renderingSystem.Start();
+	//renderingSystem.Start();
+	/*
+	x = -1.79688
+	f(x)= -6.55249
+	
+	*/
+
+	GeneticAlgorithm<> geneticAlgorithm(function);
+	geneticAlgorithm.Fit();
+
 
 	return 0;
 }

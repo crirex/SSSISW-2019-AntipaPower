@@ -5,16 +5,16 @@
 
 #include "Individual.h"
 
-template <size_t size>
+template <size_t size = kDefaultNumberOfGenes>
 class GeneticAlgorithm
 {
 private:
 	void InitalizePopulation();
-	void CalculateCumulativeProbability(std::vector<double> &probabilityOfSelection, std::vector<double> &cumulativeProbabilyVector);
-	void CalculateProbabilityOfSelection(std::vector<double> &probabilityOfSelection, double sumOfFitness);
-	void CalculateSumOfFitnessFunction(double& sumOfFitness);
-	bool IsInInterval(const double number, const double lowerBound, const double upperBound) const;
-	void ChangeGenes(Individual<size>& first, Individual<size>& second, const int randomSize);
+	std::vector<double> CalculateCumulativeProbability(const std::vector<double> & probabilityOfSelection);
+	std::vector<double> CalculateProbabilityOfSelection(double sumOfFitness);
+	double CalculateSumOfFitnessFunction();
+	bool IsInInterval(double number, double lowerBound, double upperBound) const;
+	void ChangeGenes(Individual<size> & first, Individual<size> & second, size_t randomSize);
 public:
 	GeneticAlgorithm(std::function<double(double)> fitnessFunction, const size_t initialPopulationSize = 200, const size_t numberOfEpochs = 300, const double crossoverProb = 0.1, const double mutationProb = 0.01, const size_t chNumber = 1);
 	~GeneticAlgorithm() = default;
@@ -25,7 +25,7 @@ public:
 	void Selection();
 	void Crossover();
 	void Mutation();
-	void RunAlgorithm();
+	void Fit();
 private:
 	std::vector<Individual<size>> m_individuals;
 	double m_crossoverProbability;
@@ -49,15 +49,12 @@ inline void GeneticAlgorithm<size>::InitalizePopulation()
 template<size_t size>
 inline void GeneticAlgorithm<size>::Selection()
 {
-	double sumOfFitness = 0;
-	std::vector<double> probabilityOfSelection{};
-	std::vector<double> cumulativeProbabilityVector{};
 	std::vector<double> randomNumbers = RandomGenerator::GenerateRealNumbers(0, 1, this->m_individuals.size());
 	std::vector<Individual<size>> newPopulation{};
 
-	CalculateSumOfFitnessFunction(sumOfFitness);
-	CalculateProbabilityOfSelection(probabilityOfSelection, sumOfFitness);
-	CalculateCumulativeProbability(probabilityOfSelection, cumulativeProbabilityVector);
+	double sumOfFitness = CalculateSumOfFitnessFunction();
+	auto probabilityOfSelection = CalculateProbabilityOfSelection(sumOfFitness);
+	auto cumulativeProbabilityVector = CalculateCumulativeProbability(probabilityOfSelection);
 
 	for (size_t index = 0; index < this->m_individuals.size() - 1; index++)
 	{
@@ -70,7 +67,7 @@ inline void GeneticAlgorithm<size>::Selection()
 		{
 			newPopulation.emplace_back(this->m_individuals[index]);
 
-			//dis is for maximization
+			//this is for maximization
 			/*for (size_t index2 = 1; index2 < this->m_individuals.size() - 1; index2++)
 			{
 				if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2], cumulativeProbabilityVector[index2 + 1]))
@@ -143,7 +140,7 @@ inline void GeneticAlgorithm<size>::Mutation()
 }
 
 template<size_t size>
-inline void GeneticAlgorithm<size>::RunAlgorithm()
+inline void GeneticAlgorithm<size>::Fit()
 {
 	for (size_t index = 0; index < this->m_numberOfEpochs && this->m_individuals.size() > 1; ++index)
 	{
@@ -158,8 +155,9 @@ inline void GeneticAlgorithm<size>::RunAlgorithm()
 }
 
 template<size_t size>
-inline void GeneticAlgorithm<size>::CalculateCumulativeProbability(std::vector<double> &probabilityOfSelection, std::vector<double> &cumulativeProbabilyVector)
+inline std::vector<double> GeneticAlgorithm<size>::CalculateCumulativeProbability(const std::vector<double> & probabilityOfSelection)
 {
+	std::vector<double> cumulativeProbabilyVector;
 	for (size_t index1 = 0; index1 < this->m_individuals.size(); ++index1)
 	{
 		double cumulativeProbability{};
@@ -169,47 +167,52 @@ inline void GeneticAlgorithm<size>::CalculateCumulativeProbability(std::vector<d
 		}
 		cumulativeProbabilyVector.emplace_back(cumulativeProbability);
 	}
+	return cumulativeProbabilyVector;
 }
 
 template<size_t size>
-inline void GeneticAlgorithm<size>::CalculateProbabilityOfSelection(std::vector<double> &probabilityOfSelection, double sumOfFitness)
+inline std::vector<double> GeneticAlgorithm<size>::CalculateProbabilityOfSelection(double sumOfFitness)
 {
+	std::vector<double> probabilityOfSelection;
 	std::for_each(this->m_individuals.begin(), this->m_individuals.end(), [&](Individual<size>& individual)
-	{
-		for (Chromosome<size>& chromosome : individual.GetChromosomes())
 		{
-			probabilityOfSelection.emplace_back(this->m_fitnessFunction(chromosome.GetValueInInterval(-10, 10)) / sumOfFitness); // de adaugat din param
-		}
-	});
+			for (Chromosome<size>& chromosome : individual.GetChromosomes())
+			{
+				probabilityOfSelection.emplace_back(exp(this->m_fitnessFunction(chromosome.GetValueInInterval(-10, 10))) / sumOfFitness); // de adaugat din param
+			}
+		});
+	return probabilityOfSelection;
 }
 
 template<size_t size>
-inline void GeneticAlgorithm<size>::CalculateSumOfFitnessFunction(double& sumOfFitness)
+inline double GeneticAlgorithm<size>::CalculateSumOfFitnessFunction()
 {
-	std::for_each(this->m_individuals.begin(), this->m_individuals.end(), [&](Individual<size>& individual)
-	{
-		for (Chromosome<size>& chromosome : individual.GetChromosomes())
+	double sumOfFitness = 0;
+	std::for_each(this->m_individuals.begin(), this->m_individuals.end(), [&](Individual<size> & individual)
 		{
-			sumOfFitness += this->m_fitnessFunction(chromosome.GetValueInInterval(-10, 10)); // de adaugat din param
-		}
-	});
+			for (Chromosome<size>& chromosome : individual.GetChromosomes())
+			{
+				sumOfFitness += this->m_fitnessFunction(exp(chromosome.GetValueInInterval(-10, 10))); // de adaugat din param
+			}
+		});
+	return sumOfFitness;
 }
 
 template<size_t size>
-inline bool GeneticAlgorithm<size>::IsInInterval(const double number, const double lowerBound, const double upperBound) const
+inline bool GeneticAlgorithm<size>::IsInInterval(double number, double lowerBound, double upperBound) const
 {
 	return number > lowerBound && number <= upperBound;
 }
 
 template<size_t size>
-inline void GeneticAlgorithm<size>::ChangeGenes(Individual<size>& first, Individual<size>& second, const int randomSize)
+inline void GeneticAlgorithm<size>::ChangeGenes(Individual<size> & first, Individual<size> & second, size_t randomSize)
 {
-	auto& firstGenes = first.GetChromosomes().front().GetGenes();
-	auto& secondGenes = second.GetChromosomes().front().GetGenes();
+	auto & firstGenes = first.GetChromosomes().front().GetGenes();
+	auto & secondGenes = second.GetChromosomes().front().GetGenes();
 
 	auto temp = firstGenes;
 
-	for (size_t index = randomSize; index < size; index++)
+	for (size_t index = randomSize; index < size; ++index)
 	{
 		firstGenes[index] = secondGenes[index];
 		secondGenes[index] = temp[index];
@@ -230,13 +233,13 @@ inline GeneticAlgorithm<size>::GeneticAlgorithm(std::function<double(double)> fi
 }
 
 template<size_t size>
-inline std::vector<Individual<size>>& GeneticAlgorithm<size>::GetIndividuals()
+inline std::vector<Individual<size>> & GeneticAlgorithm<size>::GetIndividuals()
 {
 	return this->m_individuals;
 }
 
 template<size_t size>
-inline double GeneticAlgorithm<size>::GetResult(const double number)const
+inline double GeneticAlgorithm<size>::GetResult(const double number) const
 {
 	return this->m_fitnessFunction(number);
 }
