@@ -17,10 +17,33 @@
 
 #include "Enviorment/GeneticAlgorithm/GeneticAlgorithm.h"
 
+#include <math.h>
 
-double function(double x)
+
+double functionUno(Individual<> individual)
 {
+	const int minimInterval = -10;
+	const int maximInterval = 10;
+
+	const auto& cromososns = individual.GetChromosomes();
+	const auto& x = cromososns[0].GetValueInInterval(minimInterval, maximInterval);
+
 	return x * x + 6 * x + 1;
+}
+
+double functionDos(Individual<> individual)
+{
+	const int xMinimInterval = -5;
+	const int xMaximInterval = 3;
+	const int yMinimInterval = 2;
+	const int yMaximInterval = 10;
+
+	const auto& cromososns = individual.GetChromosomes();
+	const auto& x = cromososns[0].GetValueInInterval(xMinimInterval, xMaximInterval);
+	const auto& y = cromososns[1].GetValueInInterval(yMinimInterval, yMaximInterval);
+
+	return std::sin(std::_Pi * 10 * x + 10 / (1 + y * y)) + std::log(x * x + y * y);
+
 }
 
 
@@ -59,16 +82,17 @@ int main(int argc, char* argv[])
 	std::string buffer = "beamWriteFrameAfter.vtk";
 	Exporter::WriteFrame(beam->GetMesh(), buffer, "beamWriteMesh");
 
-	//renderingSystem.Start();
-	/*
-	x = -1.79688
-	f(x)= -6.55249
-	
-	*/
+	renderingSystem.Start();
 
-	GeneticAlgorithm<> geneticAlgorithm(function);
-	geneticAlgorithm.Fit();
+	GeneticAlgorithm<> geneticAlgorithmUno(functionUno, 10, 300, 0.1, 0.01, 1, true);
+	geneticAlgorithmUno.Fit("first_output_functionUno.txt");
+	geneticAlgorithmUno.Fit("second_output_functionUno.txt");
+	geneticAlgorithmUno.Fit("third_output_functionUno.txt");
 
+	GeneticAlgorithm<> geneticAlgorithmDos(functionDos, 10, 300, 0.1, 0.01, 2, false);
+	geneticAlgorithmDos.Fit("first_output_functionDos.txt");
+	geneticAlgorithmDos.Fit("second_output_functionDos.txt");
+	geneticAlgorithmDos.Fit("third_output_functionDos.txt");
 
 	return 0;
 }

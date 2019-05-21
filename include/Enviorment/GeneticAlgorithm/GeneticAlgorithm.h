@@ -2,8 +2,9 @@
 
 #include <functional>
 #include <numeric>
-
+#include <fstream>
 #include "Individual.h"
+#include "Chromosome.h"
 
 template <size_t size = kDefaultNumberOfGenes>
 class GeneticAlgorithm
@@ -13,19 +14,26 @@ private:
 	std::vector<double> CalculateCumulativeProbability(const std::vector<double> & probabilityOfSelection);
 	std::vector<double> CalculateProbabilityOfSelection(double sumOfFitness);
 	double CalculateSumOfFitnessFunction();
+	void PrintIndividuals(std::ostream& out, Individual<size>& bestIndividual);
 	bool IsInInterval(double number, double lowerBound, double upperBound) const;
 	void ChangeGenes(Individual<size> & first, Individual<size> & second, size_t randomSize);
 public:
-	GeneticAlgorithm(std::function<double(double)> fitnessFunction, const size_t initialPopulationSize = 200, const size_t numberOfEpochs = 300, const double crossoverProb = 0.1, const double mutationProb = 0.01, const size_t chNumber = 1);
+	GeneticAlgorithm(std::function<double(Individual<size>)> fitnessFunction,
+		size_t initialPopulationSize = 10,
+		size_t numberOfEpochs = 300,
+		double crossoverProb = 0.1,
+		double mutationProb = 0.01,
+		size_t chNumber = 1,
+		bool minimization = true);
 	~GeneticAlgorithm() = default;
 
 	std::vector<Individual<size>>& GetIndividuals();
-	double GetResult(const double number) const;
+	double GetResult(double number) const;
 
 	void Selection();
 	void Crossover();
 	void Mutation();
-	void Fit();
+	void Fit(const std::string& filename = "output.txt");
 private:
 	std::vector<Individual<size>> m_individuals;
 	double m_crossoverProbability;
@@ -33,7 +41,8 @@ private:
 	size_t m_numberOfEpochs;
 	size_t m_populationSize;
 	size_t m_chromosomeNumberPerIndividual;
-	std::function<double(double)> m_fitnessFunction;
+	bool m_minimization;
+	std::function<double(Individual<size>)> m_fitnessFunction;
 };
 
 template<size_t size>
@@ -56,30 +65,32 @@ inline void GeneticAlgorithm<size>::Selection()
 	auto probabilityOfSelection = CalculateProbabilityOfSelection(sumOfFitness);
 	auto cumulativeProbabilityVector = CalculateCumulativeProbability(probabilityOfSelection);
 
-	for (size_t index = 0; index < this->m_individuals.size() - 1; index++)
+	for (size_t index = 0; index < this->m_individuals.size() - static_cast<int>(m_minimization); index++)
 	{
 		if (IsInInterval(randomNumbers[index], 0, cumulativeProbabilityVector[index]))
 		{
-			// delete + 1 for maximization
-			newPopulation.emplace_back(this->m_individuals[index + 1]);
+			newPopulation.emplace_back(this->m_individuals[index + static_cast<int>(m_minimization)]);
 		}
 		else
 		{
-			newPopulation.emplace_back(this->m_individuals[index]);
-
-			//this is for maximization
-			/*for (size_t index2 = 1; index2 < this->m_individuals.size() - 1; index2++)
+			if (m_minimization)
 			{
-				if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2], cumulativeProbabilityVector[index2 + 1]))
+				newPopulation.emplace_back(this->m_individuals[index]);
+			}
+			else
+			{
+				for (size_t index2 = 1; index2 < this->m_individuals.size() - 1; index2++)
 				{
-					newPopulation.emplace_back(this->m_individuals[index2 + 1]);
-					break;
+					if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2], cumulativeProbabilityVector[index2 + 1]))
+					{
+						newPopulation.emplace_back(this->m_individuals[index2 + 1]);
+						break;
+					}
 				}
-			}*/
+
+			}
 		}
 	}
-
-	//std::cout << std::accumulate(probabilityOfSelection.begin(), probabilityOfSelection.end(), 0.0) << std::endl;
 	this->m_individuals = newPopulation;
 }
 
@@ -140,18 +151,36 @@ inline void GeneticAlgorithm<size>::Mutation()
 }
 
 template<size_t size>
-inline void GeneticAlgorithm<size>::Fit()
+inline void GeneticAlgorithm<size>::Fit(const std::string& filename)
 {
+	std::ofstream outputFile;
+	outputFile.open(filename, std::ios::out | std::ofstream::trunc);
+	std::vector<std::vector<Individual<size>>> allIndividualGenerations;
+	Individual<size> bestIndividual = m_individuals.front();
+
+	outputFile << "#start\n";
+	outputFile << "#generationNo: 0\n";
+	PrintIndividuals(outputFile, bestIndividual);
 	for (size_t index = 0; index < this->m_numberOfEpochs && this->m_individuals.size() > 1; ++index)
 	{
-		std::cout << "Generatia: " << index << "\n";
 		Selection();
 		Crossover();
 		Mutation();
+		allIndividualGenerations.push_back(this->m_individuals);
+
+		outputFile << "#generationNo: " << index + 1 << "\n";
+		PrintIndividuals(outputFile, bestIndividual);
 	}
 
-	double decimalValue = this->m_individuals[0].GetChromosomes().front().GetValueInInterval(-10, 10);
-	std::cout << "x = " << decimalValue << "\nf(x)= " << this->m_fitnessFunction(decimalValue) << std::endl;
+	std::string fullChromozome = "";
+	for (auto& ch : bestIndividual.GetChromosomes())
+	{
+		fullChromozome += ch.GetGenes().to_string<char, std::string::traits_type, std::string::allocator_type>();
+	}
+
+	outputFile << "Maximum/Minimum chromosome: " << fullChromozome << "\n";
+	outputFile << "Maximum/Minimum value: " << this->m_fitnessFunction(bestIndividual) << "\n";
+	outputFile << "#end";
 }
 
 template<size_t size>
@@ -175,12 +204,9 @@ inline std::vector<double> GeneticAlgorithm<size>::CalculateProbabilityOfSelecti
 {
 	std::vector<double> probabilityOfSelection;
 	std::for_each(this->m_individuals.begin(), this->m_individuals.end(), [&](Individual<size>& individual)
-		{
-			for (Chromosome<size>& chromosome : individual.GetChromosomes())
-			{
-				probabilityOfSelection.emplace_back(exp(this->m_fitnessFunction(chromosome.GetValueInInterval(-10, 10))) / sumOfFitness); // de adaugat din param
-			}
-		});
+	{
+		probabilityOfSelection.emplace_back(exp(this->m_fitnessFunction(individual)) / sumOfFitness);
+	});
 	return probabilityOfSelection;
 }
 
@@ -189,13 +215,34 @@ inline double GeneticAlgorithm<size>::CalculateSumOfFitnessFunction()
 {
 	double sumOfFitness = 0;
 	std::for_each(this->m_individuals.begin(), this->m_individuals.end(), [&](Individual<size> & individual)
-		{
-			for (Chromosome<size>& chromosome : individual.GetChromosomes())
-			{
-				sumOfFitness += this->m_fitnessFunction(exp(chromosome.GetValueInInterval(-10, 10))); // de adaugat din param
-			}
-		});
+	{
+		sumOfFitness += exp(this->m_fitnessFunction(individual));
+	});
 	return sumOfFitness;
+}
+
+template<size_t size>
+inline void GeneticAlgorithm<size>::PrintIndividuals(std::ostream & out, Individual<size>& bestIndividual)
+{
+	std::string fullChromozome = "";
+	double fitnessChromozome;
+	for (auto& individ : m_individuals)
+	{
+		for (auto& ch : individ.GetChromosomes())
+		{
+			fullChromozome += ch.GetGenes().to_string<char, std::string::traits_type, std::string::allocator_type>();
+		}
+		fitnessChromozome = this->m_fitnessFunction(individ);
+
+		if (fitnessChromozome > this->m_fitnessFunction(bestIndividual))
+		{
+			bestIndividual = individ;
+		}
+
+		out << "Chromosome " << fullChromozome << "\n";
+		out << "Value " << fitnessChromozome << "\n";
+		fullChromozome = "";
+	}
 }
 
 template<size_t size>
@@ -207,26 +254,35 @@ inline bool GeneticAlgorithm<size>::IsInInterval(double number, double lowerBoun
 template<size_t size>
 inline void GeneticAlgorithm<size>::ChangeGenes(Individual<size> & first, Individual<size> & second, size_t randomSize)
 {
-	auto & firstGenes = first.GetChromosomes().front().GetGenes();
-	auto & secondGenes = second.GetChromosomes().front().GetGenes();
-
-	auto temp = firstGenes;
-
-	for (size_t index = randomSize; index < size; ++index)
+	for (int indexChromosomes = 0; indexChromosomes < first.GetChromosomes().size(); ++indexChromosomes)
 	{
-		firstGenes[index] = secondGenes[index];
-		secondGenes[index] = temp[index];
-	}
+		auto & firstGenes = first.GetChromosomes()[indexChromosomes].GetGenes();
+		auto & secondGenes = second.GetChromosomes()[indexChromosomes].GetGenes();
 
+		auto temp = firstGenes;
+
+		for (size_t indexGenes = randomSize; indexGenes < size; ++indexGenes)
+		{
+			firstGenes[indexGenes] = secondGenes[indexGenes];
+			secondGenes[indexGenes] = temp[indexGenes];
+		}
+	}
 }
 
 template<size_t size>
-inline GeneticAlgorithm<size>::GeneticAlgorithm(std::function<double(double)> fitnessFunction, const size_t initialPopulationSize, const size_t numberOfEpochs, const double crossoverProb, const double mutationProb, const size_t chNumber) :
+inline GeneticAlgorithm<size>::GeneticAlgorithm(std::function<double(Individual<size>)> fitnessFunction,
+	size_t initialPopulationSize,
+	size_t numberOfEpochs,
+	double crossoverProb,
+	double mutationProb,
+	size_t chNumber,
+	bool minimization) :
 	m_populationSize(initialPopulationSize),
 	m_numberOfEpochs(numberOfEpochs),
 	m_crossoverProbability(crossoverProb),
 	m_mutationProbability(mutationProb),
-	m_chromosomeNumberPerIndividual(chNumber)
+	m_chromosomeNumberPerIndividual(chNumber),
+	m_minimization(minimization)
 {
 	m_fitnessFunction = fitnessFunction;
 	InitalizePopulation();
@@ -239,7 +295,7 @@ inline std::vector<Individual<size>> & GeneticAlgorithm<size>::GetIndividuals()
 }
 
 template<size_t size>
-inline double GeneticAlgorithm<size>::GetResult(const double number) const
+inline double GeneticAlgorithm<size>::GetResult(double number) const
 {
 	return this->m_fitnessFunction(number);
 }
