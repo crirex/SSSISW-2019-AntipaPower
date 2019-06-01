@@ -35,26 +35,6 @@ void GraphicalObjects::Beam::SetVisualizationMesh(const std::shared_ptr<chrono::
 	this->m_mesh->AddAsset(visualization);
 }
 
-void GraphicalObjects::Beam::StartLogStrained() const
-{
-	std::ofstream out;
-	out.open("node_info.txt", std::ios::out | std::ios::trunc);
-	for (unsigned int iele = 0; iele < this->m_mesh->GetNelements(); iele++)
-	{
-		if (auto element = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(this->m_mesh->GetElement(iele)))
-		{
-			auto StrainV = element->GetStrain();
-			out << "Strain On Thetra No: " << iele << ", X: " << StrainV.XX() << " , Y: " << StrainV.YY() << ", Z: " << StrainV.ZZ() << std::endl;
-			for (size_t nodeIndex = 0; nodeIndex < element->GetNnodes(); ++nodeIndex)
-			{
-				auto node = std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(element->GetNodeN(static_cast<int>(nodeIndex)));
-				out << "Node: " << node->GetIndex() << ", Pos X : " << node->GetPos().x() << ", Y : " << node->GetPos().y() << ", Z : " << node->GetPos().z() << std::endl;
-			}
-		}
-	}
-	out.close();
-}
-
 void GraphicalObjects::Beam::BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation)
 {
 	auto nodes = ConstructBlockNodes(origin, orientation, size);

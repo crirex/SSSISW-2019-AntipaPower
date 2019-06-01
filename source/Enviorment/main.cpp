@@ -10,6 +10,7 @@
 
 #include "Enviorment/GraphicalObjects/Wall.h"
 #include "Enviorment/GraphicalObjects/Beam.h"
+#include "Enviorment/GraphicalObjects/Cuboid.h"
 #include "Enviorment/GraphicalObjects/Cable.h"
 #include "Enviorment/Services/RenderingService.h"
 #include "Enviorment/Services/TetraMeshLoggerService.h"
@@ -64,19 +65,26 @@ int main(int argc, char* argv[])
 	auto cable = std::make_shared<GraphicalObjects::Cable>(*beam);
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigFirst(cable->GetMesh()));
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigSecond(cable->GetMesh()));
+	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5),chrono::ChVector<int>(3,3,10));
+	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
+	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
+
+
 
 	GraphicalBuilder beamBuilder({
 		std::make_shared<Services::RenderingService>(),
 		std::make_shared<Services::TetraMeshLoggerService>(),
 		std::make_shared<Services::MeshOptimizerService>(),
 		});
-	beamBuilder.Build(system, beam);
+	//beamBuilder.Build(system, beam);
 	
 	GraphicalBuilder graphicalBuilder({
 		std::make_shared<Services::RenderingService>(),
 		});
-	graphicalBuilder.Build(system, wall);
-	graphicalBuilder.Build(system, cable);
+	//graphicalBuilder.Build(system, wall);
+	//graphicalBuilder.Build(system, cable);
+	graphicalBuilder.Build(system, cuboid);
+	
 
 	Exporter::WriteMesh(beam->GetMesh(), "beamWriteMesh");
 	std::string buffer = "beamWriteFrameAfter.vtk";

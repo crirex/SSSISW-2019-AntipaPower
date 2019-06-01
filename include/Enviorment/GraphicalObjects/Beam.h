@@ -33,9 +33,6 @@ namespace GraphicalObjects
 		void SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material);
 		void SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization);
 
-	public:
-		void StartLogStrained() const;
-
 	private:
 		void BuildBlock(const chrono::Vector & origin, const chrono::Vector & size, const chrono::Vector & orientation);
 		void SetFixedBase(const std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> & baseNodes);
