@@ -1,5 +1,11 @@
 #include "Enviorment/GraphicalObjects/Cuboid.h"
 
+GraphicalObjects::Cuboid::Cuboid(std::shared_ptr<chrono::fea::ChMesh> mesh)
+{
+	this->m_mesh = mesh;
+	this->m_physicsItems.emplace_back(this->m_mesh);
+}
+
 GraphicalObjects::Cuboid::Cuboid(const chrono::Vector & blockSize, const chrono::ChVector<int> & shapeSize)
 {
 	this->m_mesh = std::make_shared<chrono::fea::ChMesh>();
@@ -15,16 +21,30 @@ void GraphicalObjects::Cuboid::SetMaterial(const std::shared_ptr<chrono::fea::Ch
 
 void GraphicalObjects::Cuboid::SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh>& visualization)
 {
-	this->m_mesh->AddAsset(visualization);
+	this->m_visualisationMesh = visualization;
+	this->m_mesh->AddAsset(this->m_visualisationMesh);
 }
 
+std::shared_ptr<chrono::fea::ChContinuumElastic> GraphicalObjects::Cuboid::GetMaterial() const
+{
+	return this->m_material;
+}
+
+std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> GraphicalObjects::Cuboid::GetVisualisationMesh() const
+{
+	return this->m_visualisationMesh;
+}
 
 void GraphicalObjects::Cuboid::Build()
 {
 	try
 	{
-		auto nodes = CreateNodes();
+		if (this->m_mesh->GetNnodes() != 0)
+		{
+			return;
+		}
 
+		auto nodes = CreateNodes();
 		for (size_t levelIndex = 0; levelIndex < nodes.size() - 1; ++levelIndex)
 		{
 			for (size_t lineIndex = 0; lineIndex < nodes.front().size() - 1; ++lineIndex)
@@ -58,6 +78,11 @@ std::shared_ptr<chrono::fea::ChMesh> GraphicalObjects::Cuboid::GetMesh() const
 	return this->m_mesh;
 }
 
+void GraphicalObjects::Cuboid::SetMesh(std::shared_ptr<chrono::fea::ChMesh> mesh)
+{
+	this->m_mesh = mesh;
+}
+
 std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>> GraphicalObjects::Cuboid::CreateNodes()
 {
 	try
@@ -86,7 +111,7 @@ std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>
 				}
 			}
 		}
-		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(this->m_mesh->GetNodes().back())->SetForce(chrono::Vector(0.0, -10.0, 0.0));
+		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(this->m_mesh->GetNodes().back())->SetForce(chrono::Vector(0.0, -100000.0, 0.0));
 		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(this->m_mesh->GetNodes().back())->SetMass(100.0);
 		SetFixedBase(baseNodes);
 		return nodes;

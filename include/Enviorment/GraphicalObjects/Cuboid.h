@@ -20,6 +20,7 @@ namespace GraphicalObjects
 		public GraphicalObject
 	{
 	public:
+		Cuboid(std::shared_ptr<chrono::fea::ChMesh> mesh);
 		Cuboid(const chrono::Vector & blockSize, const chrono::ChVector<int> & shapeSize);
 		~Cuboid() = default;
 
@@ -27,11 +28,15 @@ namespace GraphicalObjects
 	public:
 		void SetMaterial(const std::shared_ptr<chrono::fea::ChContinuumElastic> & material);
 		void SetVisualizationMesh(const std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> & visualization);
+		std::shared_ptr<chrono::fea::ChContinuumElastic> GetMaterial() const;
+		std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> GetVisualisationMesh() const;
+
 
 	public:
 		// Inherited via GraphicalObject
-		virtual void Build() override;
-		virtual std::shared_ptr<chrono::fea::ChMesh> GetMesh() const override;
+		void Build() override;
+		std::shared_ptr<chrono::fea::ChMesh> GetMesh() const override;
+		void SetMesh(std::shared_ptr<chrono::fea::ChMesh> mesh);
 
 	private:
 		std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>> CreateNodes();
@@ -41,6 +46,7 @@ namespace GraphicalObjects
 	private:
 		std::shared_ptr<chrono::fea::ChMesh> m_mesh;
 		std::shared_ptr<chrono::fea::ChContinuumElastic> m_material;
+		std::shared_ptr<chrono::fea::ChVisualizationFEAmesh> m_visualisationMesh;
 
 		chrono::Vector m_blockSize;
 		chrono::ChVector<int> m_size;

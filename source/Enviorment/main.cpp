@@ -48,7 +48,7 @@ double functionDos(Individual<> individual)
 }
 
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
 	chrono::SetChronoDataPath(CHRONO_DATA_DIR);
 
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 	auto cable = std::make_shared<GraphicalObjects::Cable>(*beam);
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigFirst(cable->GetMesh()));
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigSecond(cable->GetMesh()));
-	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5),chrono::ChVector<int>(5,5,20));
+	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
 	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
 	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
 
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
 		std::make_shared<Services::MeshOptimizerService>(),
 		});
 	//beamBuilder.Build(system, beam);
-	
+
 	GraphicalBuilder graphicalBuilder({
 		std::make_shared<Services::RenderingService>(),
 		std::make_shared<Services::MeshOptimizerService>(),
@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 	//graphicalBuilder.Build(system, wall);
 	//graphicalBuilder.Build(system, cable);
 	graphicalBuilder.Build(system, cuboid);
-	
+
 	renderingSystem.Start();
 
 	Exporter::WriteMesh(cuboid->GetMesh(), "beamWriteMesh");
