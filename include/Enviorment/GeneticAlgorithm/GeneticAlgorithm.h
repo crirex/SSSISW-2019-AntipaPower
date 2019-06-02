@@ -54,7 +54,6 @@ inline void GeneticAlgorithm<size>::InitalizePopulation()
 	}
 }
 
-//gonna make it work on a single variable
 template<size_t size>
 inline void GeneticAlgorithm<size>::Selection()
 {
@@ -65,11 +64,18 @@ inline void GeneticAlgorithm<size>::Selection()
 	auto probabilityOfSelection = CalculateProbabilityOfSelection(sumOfFitness);
 	auto cumulativeProbabilityVector = CalculateCumulativeProbability(probabilityOfSelection);
 
-	for (size_t index = 0; index < this->m_individuals.size() - static_cast<int>(m_minimization); index++)
+	for (size_t index = 0; index < this->m_individuals.size(); index++)
 	{
 		if (IsInInterval(randomNumbers[index], 0, cumulativeProbabilityVector[index]))
 		{
-			newPopulation.emplace_back(this->m_individuals[index + static_cast<int>(m_minimization)]);
+			if (index != this->m_individuals.size() - 1)
+			{
+				newPopulation.emplace_back(this->m_individuals[index + static_cast<int>(m_minimization)]);
+			}
+			else
+			{
+				newPopulation.emplace_back(this->m_individuals[index]);
+			}
 		}
 		else
 		{
@@ -79,12 +85,23 @@ inline void GeneticAlgorithm<size>::Selection()
 			}
 			else
 			{
-				for (size_t index2 = 1; index2 < this->m_individuals.size() - 1; index2++)
+				for (size_t index2 = 1; index2 < this->m_individuals.size(); index2++)
 				{
-					if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2], cumulativeProbabilityVector[index2 + 1]))
+					if (index2 != this->m_individuals.size() - 1)
 					{
-						newPopulation.emplace_back(this->m_individuals[index2 + 1]);
-						break;
+						if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2], cumulativeProbabilityVector[index2 + 1]))
+						{
+							newPopulation.emplace_back(this->m_individuals[index2 + 1]);
+							break;
+						}
+					}
+					else
+					{
+						if (IsInInterval(randomNumbers[index], cumulativeProbabilityVector[index2 - 1], cumulativeProbabilityVector[index2]))
+						{
+							newPopulation.emplace_back(this->m_individuals[index2]);
+							break;
+						}
 					}
 				}
 

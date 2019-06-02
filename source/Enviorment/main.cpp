@@ -80,6 +80,8 @@ int main(int argc, char* argv[])
 	
 	GraphicalBuilder graphicalBuilder({
 		std::make_shared<Services::RenderingService>(),
+		std::make_shared<Services::MeshOptimizerService>(),
+
 		});
 	//graphicalBuilder.Build(system, wall);
 	//graphicalBuilder.Build(system, cable);

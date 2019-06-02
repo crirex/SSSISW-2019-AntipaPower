@@ -16,27 +16,55 @@ void Services::MeshOptimizerService::OnBuiltObject(std::shared_ptr<GraphicalObje
 		{
 			mesh->AddElement(element);
 		}
-		}).detach();
+	}).detach();
 }
 
-std::shared_ptr<chrono::fea::ChMesh> Services::MeshOptimizerService::OptimizeMesh(std::shared_ptr<chrono::fea::ChMesh> mesh) const
+double Services::MeshOptimizerService::StandardDeviation(Individual<> individual)
+{
+	double mean = std::accumulate(this->m_strainData.begin(), this->m_strainData.end(), .0) /this->m_strainData.size();
+	double sum = 0.0;
+	auto[minimInterval, maximInterval] = std::minmax_element(this->m_strainData.begin(), this->m_strainData.end(), [](double firstStrain, double secondStrain) {
+		return firstStrain > secondStrain;
+	});
+	const auto & cromososns = individual.GetChromosomes();
+
+	for (size_t index = 0; index < this->m_strainData.size(); ++index)
+	{
+		auto x = cromososns[index].GetValueInInterval(*minimInterval, *maximInterval);
+		sum += std::pow(x - mean, 2);
+	}
+
+	return std::sqrt(sum/this->m_strainData.size());
+}
+
+std::shared_ptr<chrono::fea::ChMesh> Services::MeshOptimizerService::OptimizeMesh(std::shared_ptr<chrono::fea::ChMesh> mesh)
 {
 	auto clone = std::make_shared<chrono::fea::ChMesh>(*mesh->Clone());
 	clone->ClearElements();
 	auto elements = mesh->GetElements();
-	auto minmaxTetra = std::minmax_element(elements.begin(), elements.end(), [](auto first,
-		auto second) {
-			auto firstStrain = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(first)->GetStrain();
-			auto secondStrain = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(second)->GetStrain();
-			return firstStrain.GetEquivalentVonMises() > secondStrain.GetEquivalentVonMises();
-		});
+	std::for_each(elements.begin(), elements.end(), [this](auto element) {
+		if (auto tetra = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(element))
+		{
+			this->m_strainData.emplace_back(tetra->GetStrain().GetEquivalentVonMises());
+		}
+	});
+
+	GeneticAlgorithm<> algorithm([&](Individual<> individual) -> double {
+		return StandardDeviation(individual);
+	}, 10, 300, 0.1, 0.01, this->m_strainData.size(), true);
+
+	algorithm.Fit("output.test");
 
 	for each (auto element in elements)
 	{
-		if (element.get() != (*minmaxTetra.first).get() &&
-			element.get() != (*minmaxTetra.second).get())
+		if (auto tetra = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(element))
 		{
-			clone->AddElement(element);
+
+			if (tetra->GetStrain().GetEquivalentVonMises() > 0.05)
+			{
+				std::cout << tetra->GetStrain().GetEquivalentVonMises() << std::endl;
+				clone->AddElement(element);
+			}
 		}
 	}
 	return clone;
