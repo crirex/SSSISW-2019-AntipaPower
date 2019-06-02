@@ -28,7 +28,8 @@ public:
 	~GeneticAlgorithm() = default;
 
 	std::vector<Individual<size>>& GetIndividuals();
-	double GetResult(double number) const;
+	double GetResult(Individual<size> number) const;
+	const Individual<size> & GetBestIndividual() const;
 
 	void Selection();
 	void Crossover();
@@ -43,6 +44,7 @@ private:
 	size_t m_chromosomeNumberPerIndividual;
 	bool m_minimization;
 	std::function<double(Individual<size>)> m_fitnessFunction;
+	Individual<size> m_bestIndividual;
 };
 
 template<size_t size>
@@ -173,11 +175,11 @@ inline void GeneticAlgorithm<size>::Fit(const std::string& filename)
 	std::ofstream outputFile;
 	outputFile.open(filename, std::ios::out | std::ofstream::trunc);
 	std::vector<std::vector<Individual<size>>> allIndividualGenerations;
-	Individual<size> bestIndividual = m_individuals.front();
+	this->m_bestIndividual = m_individuals.front();
 
 	outputFile << "#start\n";
 	outputFile << "#generationNo: 0\n";
-	PrintIndividuals(outputFile, bestIndividual);
+	PrintIndividuals(outputFile, m_bestIndividual);
 	for (size_t index = 0; index < this->m_numberOfEpochs && this->m_individuals.size() > 1; ++index)
 	{
 		Selection();
@@ -186,17 +188,17 @@ inline void GeneticAlgorithm<size>::Fit(const std::string& filename)
 		allIndividualGenerations.push_back(this->m_individuals);
 
 		outputFile << "#generationNo: " << index + 1 << "\n";
-		PrintIndividuals(outputFile, bestIndividual);
+		PrintIndividuals(outputFile, m_bestIndividual);
 	}
 
 	std::string fullChromozome = "";
-	for (auto& ch : bestIndividual.GetChromosomes())
+	for (auto& ch : m_bestIndividual.GetChromosomes())
 	{
 		fullChromozome += ch.GetGenes().to_string<char, std::string::traits_type, std::string::allocator_type>();
 	}
 
 	outputFile << "Maximum/Minimum chromosome: " << fullChromozome << "\n";
-	outputFile << "Maximum/Minimum value: " << this->m_fitnessFunction(bestIndividual) << "\n";
+	outputFile << "Maximum/Minimum value: " << this->m_fitnessFunction(m_bestIndividual) << "\n";
 	outputFile << "#end";
 }
 
@@ -251,7 +253,7 @@ inline void GeneticAlgorithm<size>::PrintIndividuals(std::ostream & out, Individ
 		}
 		fitnessChromozome = this->m_fitnessFunction(individ);
 
-		if (fitnessChromozome > this->m_fitnessFunction(bestIndividual))
+		if (fitnessChromozome < this->m_fitnessFunction(bestIndividual))
 		{
 			bestIndividual = individ;
 		}
@@ -299,7 +301,8 @@ inline GeneticAlgorithm<size>::GeneticAlgorithm(std::function<double(Individual<
 	m_crossoverProbability(crossoverProb),
 	m_mutationProbability(mutationProb),
 	m_chromosomeNumberPerIndividual(chNumber),
-	m_minimization(minimization)
+	m_minimization(minimization),
+	m_bestIndividual(size)
 {
 	m_fitnessFunction = fitnessFunction;
 	InitalizePopulation();
@@ -312,7 +315,13 @@ inline std::vector<Individual<size>> & GeneticAlgorithm<size>::GetIndividuals()
 }
 
 template<size_t size>
-inline double GeneticAlgorithm<size>::GetResult(double number) const
+inline double GeneticAlgorithm<size>::GetResult(Individual<size> number) const
 {
 	return this->m_fitnessFunction(number);
+}
+
+template<size_t size>
+inline const Individual<size>& GeneticAlgorithm<size>::GetBestIndividual() const
+{
+	return this->m_bestIndividual;
 }

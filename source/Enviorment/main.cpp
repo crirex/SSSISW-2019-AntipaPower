@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 	auto cable = std::make_shared<GraphicalObjects::Cable>(*beam);
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigFirst(cable->GetMesh()));
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigSecond(cable->GetMesh()));
-	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5),chrono::ChVector<int>(3,3,10));
+	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5),chrono::ChVector<int>(5,5,20));
 	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
 	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
 
@@ -87,12 +87,11 @@ int main(int argc, char* argv[])
 	//graphicalBuilder.Build(system, cable);
 	graphicalBuilder.Build(system, cuboid);
 	
-
-	Exporter::WriteMesh(beam->GetMesh(), "beamWriteMesh");
-	std::string buffer = "beamWriteFrameAfter.vtk";
-	Exporter::WriteFrame(beam->GetMesh(), buffer, "beamWriteMesh");
-
 	renderingSystem.Start();
+
+	Exporter::WriteMesh(cuboid->GetMesh(), "beamWriteMesh");
+	std::string buffer = "beamWriteFrameAfter.vtk";
+	Exporter::WriteFrame(cuboid->GetMesh(), buffer, "beamWriteMesh");
 
 	GeneticAlgorithm<> geneticAlgorithmUno(functionUno, 10, 300, 0.1, 0.01, 1, true);
 	geneticAlgorithmUno.Fit("first_output_functionUno.txt");

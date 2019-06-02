@@ -18,7 +18,7 @@ public:
 
 	unsigned long GetDecimalValue() const;
 	std::bitset<size>& GetGenes();	
-	double GetValueInInterval(int lowerBound, int upperBound) const;
+	double GetValueInInterval(double lowerBound, double upperBound) const;
 private:
 	std::bitset<size> m_genes;
 };
@@ -52,7 +52,7 @@ inline void Chromosome<size>::GenerateRandomChromosome()
 }
 
 template<size_t size>
-inline double Chromosome<size>::GetValueInInterval(int lowerBound, int upperBound) const
+inline double Chromosome<size>::GetValueInInterval(double lowerBound, double upperBound) const
 {
 	return lowerBound + this->m_genes.to_ulong() * ((upperBound - lowerBound) / (pow(2, size)));
 }
