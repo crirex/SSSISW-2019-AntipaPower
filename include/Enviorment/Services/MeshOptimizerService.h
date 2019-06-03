@@ -12,13 +12,13 @@
 #include "Enviorment/GraphicalObjects/Configurations.h"
 #include "Enviorment/GeneticAlgorithm/GeneticAlgorithm.h"
 
-
 namespace Services
 {
 	class MeshOptimizerService :
 		public IBuiltObjectService
 	{
 	public:
+		static constexpr size_t number_of_thetra = 720;
 		// Inherited via IBuiltObjectService
 		virtual std::string GetHashCode() const override;
 		virtual void OnBuiltObject(std::shared_ptr<GraphicalObjects::GraphicalContext> context) override;
@@ -26,13 +26,16 @@ namespace Services
 	private:
 		double StandardDeviation(Individual<> individual);
 
+		double fittnessFunction(Individual<number_of_thetra> individual);
+
 	public:
 		std::shared_ptr<chrono::fea::ChMesh> OptimizeMesh(std::shared_ptr<GraphicalObjects::GraphicalContext> context);
 
-		void CalculateStarin(const std::vector<std::shared_ptr<chrono::fea::ChElementBase>> & elements);
+		void CalculateStrain(const std::vector<std::shared_ptr<chrono::fea::ChElementBase>> & elements);
 
 	private:
 		std::vector<double> m_strainData;
+		std::shared_ptr<GraphicalObjects::GraphicalContext> m_context;
 	};
 }
 

@@ -1,5 +1,7 @@
 #include "Enviorment/Services/MeshOptimizerService.h"
 
+//Services::MeshOptimizerService::number_of_thetra;
+
 std::string Services::MeshOptimizerService::GetHashCode() const
 {
 	return typeid(*this).name();
@@ -20,16 +22,16 @@ void Services::MeshOptimizerService::OnBuiltObject(std::shared_ptr<GraphicalObje
 	}).detach();
 
 
-	GraphicalBuilder graphicalBuilder({
-		std::make_shared<Services::RenderingService>(),
-		});
+	//GraphicalBuilder graphicalBuilder({
+		//std::make_shared<Services::RenderingService>(),
+		//});
 
 
-	std::shared_ptr<GraphicalObjects::Cuboid> cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
+	//std::shared_ptr<GraphicalObjects::Cuboid> cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
 	//cuboid->SetMesh(secondCloneMesh);
-	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
-	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
-	graphicalBuilder.Build(context->GetSystem(), cuboid);
+	//cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
+	//cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
+	//graphicalBuilder.Build(context->GetSystem(), cuboid);
 
 }
 
@@ -51,41 +53,80 @@ double Services::MeshOptimizerService::StandardDeviation(Individual<> individual
 	return std::sqrt(sum / this->m_strainData.size());
 }
 
-std::shared_ptr<chrono::fea::ChMesh> Services::MeshOptimizerService::OptimizeMesh(std::shared_ptr<GraphicalObjects::GraphicalContext> context)
+double Services::MeshOptimizerService::fittnessFunction(Individual<number_of_thetra> individual)
 {
-	auto mesh = context->GetGraphicalObject()->GetMesh();
-	auto elements = mesh->GetElements();
-	CalculateStarin(elements);
+	auto mesh = this->m_context->GetGraphicalObject()->GetMesh();
 	auto cloneMesh = std::make_shared<chrono::fea::ChMesh>(*mesh->Clone());
+	auto elements = mesh->GetElements();
 	cloneMesh->ClearElements();
 
+	std::string fullChromozome = "";
+	int index = 0;
 
-	GeneticAlgorithm<> algorithm([&](Individual<> individual) -> double {
-		return StandardDeviation(individual);
-	}, 300, 300, 0.1, 0.01, this->m_strainData.size(), true);
-
-
-	algorithm.Fit("output.test");
-
-
+	for (auto& ch : individual.GetChromosomes())
+	{
+		fullChromozome += ch.GetGenes().to_string<char, std::string::traits_type, std::string::allocator_type>();
+	}
+	
 	for each (auto element in elements)
 	{
-		if (auto tetra = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(element))
+		if (fullChromozome[index] == '1')
 		{
-			if (tetra->GetStrain().GetEquivalentVonMises() > algorithm.GetResult(algorithm.GetBestIndividual()))
+			if (auto tetra = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(element))
 			{
 				cloneMesh->AddElement(element);
 			}
 		}
+		++index;
 	}
 
+	auto cloneElements = cloneMesh->GetElements();
+	CalculateStrain(cloneElements);
 
+	GeneticAlgorithm<> algorithm([&](Individual<> individual) -> double {
+		return StandardDeviation(individual);
+	}, 100, 10, 0.1, 0.01, this->m_strainData.size(), true);
 
-	return cloneMesh;
-
+	algorithm.Fit("output1.test");
+	return this->StandardDeviation(algorithm.GetBestIndividual());
 }
 
-void Services::MeshOptimizerService::CalculateStarin(const std::vector<std::shared_ptr<chrono::fea::ChElementBase>> & elements)
+std::shared_ptr<chrono::fea::ChMesh> Services::MeshOptimizerService::OptimizeMesh(std::shared_ptr<GraphicalObjects::GraphicalContext> context)
+{
+	this->m_context = context;
+	auto mesh = context->GetGraphicalObject()->GetMesh();
+	auto elements = mesh->GetElements();
+	auto cloneMesh = std::make_shared<chrono::fea::ChMesh>(*mesh->Clone());
+	cloneMesh->ClearElements();
+
+	GeneticAlgorithm<number_of_thetra> algorithm([&](Individual<number_of_thetra> individual) -> double {
+		return fittnessFunction(individual); }, 100, 10, 0.1, 0.01, 1, true);
+
+	algorithm.Fit("output.test");
+
+	auto individual = algorithm.GetBestIndividual();
+	std::string fullChromozome = "";
+	for (auto& ch : individual.GetChromosomes())
+	{
+		fullChromozome += ch.GetGenes().to_string<char, std::string::traits_type, std::string::allocator_type>();
+	}
+
+	int index = 0;
+	for each (auto element in elements)
+	{
+		if (fullChromozome[index] == '1')
+		{
+			if (auto tetra = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(element))
+			{
+				cloneMesh->AddElement(element);
+			}
+		}
+		++index;
+	}
+	return cloneMesh;
+}
+
+void Services::MeshOptimizerService::CalculateStrain(const std::vector<std::shared_ptr<chrono::fea::ChElementBase>> & elements)
 {
 	std::for_each(elements.begin(), elements.end(), [this](auto element) {
 		if (auto tetra = std::dynamic_pointer_cast<chrono::fea::ChElementTetra_4>(element))

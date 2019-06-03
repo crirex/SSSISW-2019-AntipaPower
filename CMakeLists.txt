@@ -71,7 +71,7 @@ find_package(Chrono
 #--------------------------------------------------------------
 
 if (NOT Chrono_FOUND)
-  message("Could not find Chrono or one of its required modules")
+  message( FATAL_ERROR "Could not find Chrono or one of its required modules")
   SET(Chrono_DIR "${AMMO_SOURCE_DIR}/../chrono_build/cmake")
   LIST(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/../Chrono/lib")
 endif()
@@ -128,10 +128,19 @@ file(GLOB_RECURSE SRCS
 	"${SRCROOT}/*.cpp"
 )
 
-add_executable(AMMO 
+#set(BOOST_ROOT E:/Projects/AMMO/boost_1_70_0)
+#set(Boost_INCLUDE_DIR E:/Projects/AMMO/boost_1_70_0)
+#set(BOOST_LIBRARYDIR E:/Projects/AMMO/boost_1_70_0/stage/lib)
+
+#FIND_PACKAGE( Boost 1.70.0 REQUIRED COMPONENTS dynamic_bitset )
+#INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+
+ADD_EXECUTABLE(AMMO 
 ${INCS} 
 ${SRCS}
-)
+)   
+
+#TARGET_LINK_LIBRARIES( AMMO LINK_PUBLIC ${Boost_LIBRARIES} )
 
 foreach(FILE ${SRCS}) 
     # Get the directory of the source file
@@ -192,7 +201,8 @@ endforeach()
 set_target_properties(AMMO PROPERTIES 
 	    COMPILE_FLAGS "${CHRONO_CXX_FLAGS} ${EXTRA_COMPILE_FLAGS}"
 	    COMPILE_DEFINITIONS "CHRONO_DATA_DIR=\"${CHRONO_DATA_DIR}\""
-	    LINK_FLAGS "${CHRONO_LINKER_FLAGS}")
+	    LINK_FLAGS "${CHRONO_LINKER_FLAGS}"
+		CXX_STANDARD 17)
 
 #--------------------------------------------------------------
 # Link to Chrono libraries and dependency libraries

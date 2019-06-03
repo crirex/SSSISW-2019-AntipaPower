@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 	auto cable = std::make_shared<GraphicalObjects::Cable>(*beam);
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigFirst(cable->GetMesh()));
 	cable->SetVisualtizationMesh(GraphicalObjects::Configurations::CreateCableVisualizationMeshConfigSecond(cable->GetMesh()));
-	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
+	auto cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(5, 5, 10));
 	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
 	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
 
