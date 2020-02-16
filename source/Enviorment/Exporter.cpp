@@ -130,12 +130,12 @@ void Exporter::EvaluateDeflection(std::shared_ptr<ChElementTetra_4> & element, d
 {
 	//Extracting the information regarding the nodes
 	ChMatrixDynamic<> matrix;
-	element->GetStateBlock(matrix);
+	//element->GetStateBlock(matrix);
 	std::vector<ChVector<>> vectors;
-	vectors.emplace_back(ChVector<>(matrix.ClipVector(0, 0)));
-	vectors.emplace_back(ChVector<>(matrix.ClipVector(3, 0)));
-	vectors.emplace_back(ChVector<>(matrix.ClipVector(6, 0)));
-	vectors.emplace_back(ChVector<>(matrix.ClipVector(9, 0)));
+	//vectors.emplace_back(ChVector<>(matrix.ClipVector(0, 0)));
+	//vectors.emplace_back(ChVector<>(matrix.ClipVector(3, 0)));
+	//vectors.emplace_back(ChVector<>(matrix.ClipVector(6, 0)));
+	//vectors.emplace_back(ChVector<>(matrix.ClipVector(9, 0)));
 
 	ChVector<> pos;
 	ChVector<> defVec;

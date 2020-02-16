@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chrono/solver/ChSolverMINRES.h"
+//#include "chrono/solver/ChSolverMINRES.h"
 #include "chrono/physics/ChSystem.h"
 #include "chrono_irrlicht/ChIrrApp.h"
 
