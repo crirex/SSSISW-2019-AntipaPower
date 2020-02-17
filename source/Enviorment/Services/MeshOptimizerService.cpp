@@ -22,16 +22,16 @@ void Services::MeshOptimizerService::OnBuiltObject(std::shared_ptr<GraphicalObje
 	}).detach();
 
 
-	//GraphicalBuilder graphicalBuilder({
-		//std::make_shared<Services::RenderingService>(),
-		//});
+	GraphicalBuilder graphicalBuilder({
+		std::make_shared<Services::RenderingService>(),
+		});
 
 
-	//std::shared_ptr<GraphicalObjects::Cuboid> cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
-	//cuboid->SetMesh(secondCloneMesh);
-	//cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
-	//cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
-	//graphicalBuilder.Build(context->GetSystem(), cuboid);
+	std::shared_ptr<GraphicalObjects::Cuboid> cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
+	cuboid->SetMesh(clone);
+	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
+	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
+	graphicalBuilder.Build(context->GetSystem(), cuboid);
 
 }
 
@@ -99,8 +99,10 @@ std::shared_ptr<chrono::fea::ChMesh> Services::MeshOptimizerService::OptimizeMes
 	auto cloneMesh = std::make_shared<chrono::fea::ChMesh>(*mesh->Clone());
 	cloneMesh->ClearElements();
 
-	GeneticAlgorithm<number_of_thetra> algorithm([&](Individual<number_of_thetra> individual) -> double {
-		return fittnessFunction(individual); }, 100, 10, 0.1, 0.01, 1, true);
+	GeneticAlgorithm<number_of_thetra> algorithm([&](Individual<number_of_thetra> individual) -> double 
+	{
+		return fittnessFunction(individual); 
+	}, 100, 10, 0.1, 0.01, 1, true);
 
 	algorithm.Fit("output.test");
 

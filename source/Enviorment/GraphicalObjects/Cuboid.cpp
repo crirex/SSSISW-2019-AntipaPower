@@ -111,7 +111,7 @@ std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>
 				}
 			}
 		}
-		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(this->m_mesh->GetNodes().back())->SetForce(chrono::Vector(0.0, -50000.0, 0.0));
+		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(this->m_mesh->GetNodes().back())->SetForce(chrono::Vector(0.0, -10000.0, 0.0));
 		std::dynamic_pointer_cast<chrono::fea::ChNodeFEAxyz>(this->m_mesh->GetNodes().back())->SetMass(100.0);
 		SetFixedBase(baseNodes);
 		return nodes;
@@ -119,6 +119,7 @@ std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>
 	catch (const std::exception& exception)
 	{
 		std::cout << exception.what() << std::endl;
+		return std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>>();
 	}
 }
 

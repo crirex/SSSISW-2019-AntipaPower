@@ -89,8 +89,6 @@ void Exporter::WriteFrame(std::shared_ptr<ChMesh> my_mesh, std::string saveAsBuf
 
 	double scalar = 0;
 	for (uint16_t elementIndex = 0; elementIndex < my_mesh->GetNelements(); elementIndex++) {
-		if (auto element = std::dynamic_pointer_cast<ChElementTetra_4>(my_mesh->GetElement(elementIndex)))
-			EvaluateDeflection(element, scalar);
 		output << scalar + 1e-20 << "\n";
 	}
 
@@ -124,29 +122,4 @@ void Exporter::WriteFrame(std::shared_ptr<ChMesh> my_mesh, std::string saveAsBuf
 	}
 
 	output.close();
-}
-
-void Exporter::EvaluateDeflection(std::shared_ptr<ChElementTetra_4> & element, double & def)
-{
-	//Extracting the information regarding the nodes
-	ChMatrixDynamic<> matrix;
-	//element->GetStateBlock(matrix);
-	std::vector<ChVector<>> vectors;
-	//vectors.emplace_back(ChVector<>(matrix.ClipVector(0, 0)));
-	//vectors.emplace_back(ChVector<>(matrix.ClipVector(3, 0)));
-	//vectors.emplace_back(ChVector<>(matrix.ClipVector(6, 0)));
-	//vectors.emplace_back(ChVector<>(matrix.ClipVector(9, 0)));
-
-	ChVector<> pos;
-	ChVector<> defVec;
-
-	for (const auto& vect : vectors)
-	{
-		pos.x() += vect.x();
-		pos.y() += vect.y();
-		pos.z() += vect.z();
-	}
-
-	defVec = pos / 4;
-	def = defVec.Length();
 }

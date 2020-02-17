@@ -18,7 +18,7 @@ namespace Services
 		public IBuiltObjectService
 	{
 	public:
-		static constexpr size_t number_of_thetra = 720;
+		static constexpr size_t number_of_thetra = 180;
 		// Inherited via IBuiltObjectService
 		virtual std::string GetHashCode() const override;
 		virtual void OnBuiltObject(std::shared_ptr<GraphicalObjects::GraphicalContext> context) override;

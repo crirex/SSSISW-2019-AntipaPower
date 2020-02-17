@@ -33,7 +33,6 @@ void RenderingSystem::InitComponents()
 	//this->m_system->SetTolForce(0.1e-13);
 	this->m_system->SetSolverForceTolerance(0.1e-13);
 
-	//THIS IS PROBABLY NOT GONNA WORK
 	//auto msolver = std::static_pointer_cast<chrono::ChSolverMINRES>(this->m_system->GetSolver());
 	auto msolver = this->m_system->GetSolver();
 	msolver->SetVerbose(false);
