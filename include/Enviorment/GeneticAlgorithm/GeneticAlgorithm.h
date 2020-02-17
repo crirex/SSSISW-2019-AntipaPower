@@ -247,20 +247,23 @@ inline void GeneticAlgorithm<size>::PrintIndividuals(std::ostream & out, Individ
 	double fitnessChromozome;
 	for (auto& individ : m_individuals)
 	{
+		fullChromozome = "";
 		for (auto& ch : individ.GetChromosomes())
 		{
 			fullChromozome += ch.GetGenes().to_string<char, std::string::traits_type, std::string::allocator_type>();
 		}
-		fitnessChromozome = this->m_fitnessFunction(individ);
-
-		if (fitnessChromozome < this->m_fitnessFunction(bestIndividual))
+		if (individ.GetChromosomes().size() > 1)
 		{
-			bestIndividual = individ;
+			fitnessChromozome = this->m_fitnessFunction(individ);
+		
+			if (fitnessChromozome < this->m_fitnessFunction(bestIndividual))
+			{
+				bestIndividual = individ;
+			}
 		}
 
 		out << "Chromosome " << fullChromozome << "\n";
 		out << "Value " << fitnessChromozome << "\n";
-		fullChromozome = "";
 	}
 }
 

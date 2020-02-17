@@ -53,10 +53,9 @@ int main(int argc, char* argv[])
 	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
 
 	GraphicalBuilder graphicalBuilder({
-		std::make_shared<Services::RenderingService>(),
 		std::make_shared<Services::MeshOptimizerService>(),
+		std::make_shared<Services::RenderingService>(),
 		});
-
 	graphicalBuilder.Build(system, cuboid);
 
 	// ========= This is the infinite loop for the rendering. Only after this is closed does the other code below execute. This needs to always be here. =========

@@ -87,7 +87,7 @@ std::vector<std::vector<std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>>>
 {
 	try
 	{
-		int length = this->m_size.x(), height = this->m_size.y(), width = this->m_size.z();
+		int length = this->m_size.x() + 1, height = this->m_size.y() + 1, width = this->m_size.z() + 1; // There's a +1 here so that the object created to have the exact values as expected when they're put into the constructor.
 		double xSize = this->m_blockSize.x(), ySize = this->m_blockSize.y(), zSize = this->m_blockSize.z();
 		std::vector<std::shared_ptr<chrono::fea::ChNodeFEAxyz>> baseNodes;
 

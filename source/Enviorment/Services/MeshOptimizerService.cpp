@@ -1,7 +1,5 @@
 #include "Enviorment/Services/MeshOptimizerService.h"
 
-//Services::MeshOptimizerService::number_of_thetra;
-
 std::string Services::MeshOptimizerService::GetHashCode() const
 {
 	return typeid(*this).name();
@@ -10,29 +8,28 @@ std::string Services::MeshOptimizerService::GetHashCode() const
 void Services::MeshOptimizerService::OnBuiltObject(std::shared_ptr<GraphicalObjects::GraphicalContext> context)
 {
 	auto mesh = context->GetGraphicalObject()->GetMesh();
-	auto clone = std::make_shared<chrono::fea::ChMesh>(*mesh->Clone());
+	auto clone = std::make_shared<chrono::fea::ChMesh>(*mesh);
 	std::thread([&, mesh, context]() {
 		std::this_thread::sleep_for(std::chrono::seconds(5));
-		auto optimizedMeh = OptimizeMesh(context);
+		auto optimizedMesh = OptimizeMesh(context);
 		mesh->ClearElements();
-		for each (auto element in optimizedMeh->GetElements())
+		for each (auto element in optimizedMesh->GetElements())
 		{
 			mesh->AddElement(element);
 		}
 	}).detach();
 
 
-	GraphicalBuilder graphicalBuilder({
+	/*GraphicalBuilder graphicalBuilder({
 		std::make_shared<Services::RenderingService>(),
 		});
 
 
-	std::shared_ptr<GraphicalObjects::Cuboid> cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(3, 3, 10));
+	std::shared_ptr<GraphicalObjects::Cuboid> cuboid = std::make_shared<GraphicalObjects::Cuboid>(chrono::Vector(0.5), chrono::ChVector<int>(2, 2, 10));
 	cuboid->SetMesh(clone);
 	cuboid->SetMaterial(GraphicalObjects::Configurations::CreateBeamMaterialConfig());
 	cuboid->SetVisualizationMesh(GraphicalObjects::Configurations::CreateBeamVisualizationMeshConfig(cuboid->GetMesh()));
-	graphicalBuilder.Build(context->GetSystem(), cuboid);
-
+	graphicalBuilder.Build(context->GetSystem(), cuboid);*/
 }
 
 double Services::MeshOptimizerService::StandardDeviation(Individual<> individual)
@@ -87,7 +84,7 @@ double Services::MeshOptimizerService::fittnessFunction(Individual<number_of_the
 		return StandardDeviation(individual);
 	}, 100, 10, 0.1, 0.01, this->m_strainData.size(), true);
 
-	algorithm.Fit("output1.test");
+	algorithm.Fit("output.test");
 	return this->StandardDeviation(algorithm.GetBestIndividual());
 }
 
@@ -104,7 +101,7 @@ std::shared_ptr<chrono::fea::ChMesh> Services::MeshOptimizerService::OptimizeMes
 		return fittnessFunction(individual); 
 	}, 100, 10, 0.1, 0.01, 1, true);
 
-	algorithm.Fit("output.test");
+	//algorithm.Fit("output.test");
 
 	auto individual = algorithm.GetBestIndividual();
 	std::string fullChromozome = "";
